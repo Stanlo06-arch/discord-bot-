@@ -29,8 +29,8 @@ const CATEGORY_ID = "1321858825929621584";
 const WELCOME_CHANNEL_ID = "1457160970811080910";
 
 // 🖼️ DESIGN
-const LOGO = "DEIN_LOGO_LINK";
-const BANNER = "DEIN_BANNER_LINK";
+const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png?ex=69f1e6d7&is=69f09557&hm=d50c91502382112c78c5d6a8b7de5d497b846a17f3c4421f21b22ed77383eb58&";
+const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png?ex=69f1be8e&is=69f06d0e&hm=f3d564ac33f15aaba8aca8953b2944f9087a330c6b00b10e4cd43bbcda00acaa&";
 
 // 🤖 BOT
 const client = new Client({
