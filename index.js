@@ -90,7 +90,6 @@ client.on('interactionCreate', async interaction => {
             { name: "Kennzeichen", value: interaction.options.getString('kennzeichen') },
             { name: "Farbe", value: interaction.options.getString('farbe') }
           )
-          .setImage(bild.url || BANNER)
       ]
     });
   }
@@ -109,7 +108,6 @@ client.on('interactionCreate', async interaction => {
             { name: "Kunde", value: interaction.options.getString('kunde') },
             { name: "Kennzeichen", value: interaction.options.getString('kennzeichen') }
           )
-          .setImage(bild.url || BANNER)
       ]
     });
   }
