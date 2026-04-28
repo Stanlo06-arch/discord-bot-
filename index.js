@@ -5,23 +5,27 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  PermissionsBitField,
-  ChannelType,
-  MessageFlags,
+  ChannelSelectMenuBuilder,
   ModalBuilder,
   TextInputBuilder,
-  TextInputStyle
+  TextInputStyle,
+  PermissionsBitField,
+  ChannelType,
+  MessageFlags
 } = require('discord.js');
 
-// 🔐 TOKEN aus Railway
 const TOKEN = process.env.TOKEN;
 
 // 🔧 ANPASSEN
 const SUPPORT_ROLE_ID = "1497953436514255089";
-const TICKET_CHANNEL_ID = "1498024704726929468";
-const VORLAGE_CHANNEL_ID = "1498441200062169159";
+const TICKET_PANEL_ID = "1498024704726929468";
+const VORLAGE_PANEL_ID = "1498441200062169159";
 const CATEGORY_ID = "1321858825929621584";
 const WELCOME_CHANNEL_ID = "1457160970811080910";
+
+// 🖼️ DESIGN (GIF GEHT!)
+const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png?ex=69f1e6d7&is=69f09557&hm=d50c91502382112c78c5d6a8b7de5d497b846a17f3c4421f21b22ed77383eb58&";
+const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png?ex=69f1be8e&is=69f06d0e&hm=f3d564ac33f15aaba8aca8953b2944f9087a330c6b00b10e4cd43bbcda00acaa&";
 
 // 🤖 BOT
 const client = new Client({
@@ -35,8 +39,8 @@ const client = new Client({
 client.once('clientReady', async () => {
   console.log(`Bot online: ${client.user.tag}`);
 
-  // 🎟️ Ticket Panel
-  const ticketChannel = await client.channels.fetch(TICKET_CHANNEL_ID).catch(() => null);
+  // 🎟️ TICKET PANEL
+  const ticketChannel = await client.channels.fetch(TICKET_PANEL_ID).catch(() => null);
   if (ticketChannel) {
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
@@ -46,13 +50,13 @@ client.once('clientReady', async () => {
     );
 
     await ticketChannel.send({
-      content: "🎟️ Support\nKlicke um ein Ticket zu öffnen",
+      content: "🎟️ Support System\nKlicke um ein Ticket zu öffnen",
       components: [row]
     });
   }
 
-  // 📢 Vorlage Panel
-  const vorlageChannel = await client.channels.fetch(VORLAGE_CHANNEL_ID).catch(() => null);
+  // 📢 VORLAGE PANEL
+  const vorlageChannel = await client.channels.fetch(VORLAGE_PANEL_ID).catch(() => null);
   if (vorlageChannel) {
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
@@ -62,7 +66,7 @@ client.once('clientReady', async () => {
     );
 
     await vorlageChannel.send({
-      content: "📢 Hier klicken um eine Vorlage zu erstellen",
+      content: "📢 Vorlage System\nKlicke um eine Vorlage zu erstellen",
       components: [row]
     });
   }
@@ -71,10 +75,47 @@ client.once('clientReady', async () => {
 // 💬 INTERACTIONS
 client.on('interactionCreate', async interaction => {
 
-  // 🎟️ Ticket öffnen
-  if (interaction.isButton() && interaction.customId === 'open_ticket') {
+  // ===== XENON =====
+  if (interaction.isChatInputCommand() && interaction.commandName === 'xenon') {
+    const bild = interaction.options.getAttachment('bild');
 
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setAuthor({ name: "Xenon Auftrag", iconURL: LOGO })
+          .setThumbnail(LOGO)
+          .addFields(
+            { name: "Kunde", value: interaction.options.getString('kunde') },
+            { name: "Kennzeichen", value: interaction.options.getString('kennzeichen') },
+            { name: "Farbe", value: interaction.options.getString('farbe') }
+          )
+          .setImage(bild.url || BANNER)
+      ]
+    });
+  }
+
+  // ===== STANCE =====
+  if (interaction.isChatInputCommand() && interaction.commandName === 'stance') {
+    const bild = interaction.options.getAttachment('bild');
+
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setAuthor({ name: "Stance Auftrag", iconURL: LOGO })
+          .setThumbnail(LOGO)
+          .addFields(
+            { name: "Kunde", value: interaction.options.getString('kunde') },
+            { name: "Kennzeichen", value: interaction.options.getString('kennzeichen') }
+          )
+          .setImage(bild.url || BANNER)
+      ]
+    });
+  }
+
+  // ===== TICKET =====
+  if (interaction.isButton() && interaction.customId === 'open_ticket') {
 
     const channel = await interaction.guild.channels.create({
       name: `ticket-${interaction.user.username}`,
@@ -82,60 +123,120 @@ client.on('interactionCreate', async interaction => {
       parent: CATEGORY_ID,
       permissionOverwrites: [
         { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-        { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
-        { id: SUPPORT_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
+        { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel] },
+        { id: SUPPORT_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel] }
       ]
     });
 
-    await channel.send(`Ticket für <@${interaction.user.id}> erstellt`);
-    await interaction.editReply({ content: `Ticket: ${channel}` });
-  }
-
-  // 📢 Vorlage Button → Modal
-  if (interaction.isButton() && interaction.customId === 'open_vorlage') {
-
-    const modal = new ModalBuilder()
-      .setCustomId('vorlage_modal')
-      .setTitle('Vorlage erstellen');
-
-    const titel = new TextInputBuilder()
-      .setCustomId('titel')
-      .setLabel('Titel')
-      .setStyle(TextInputStyle.Short);
-
-    const text = new TextInputBuilder()
-      .setCustomId('text')
-      .setLabel('Text')
-      .setStyle(TextInputStyle.Paragraph);
-
-    modal.addComponents(
-      new ActionRowBuilder().addComponents(titel),
-      new ActionRowBuilder().addComponents(text)
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('close_ticket')
+        .setLabel('🔒 Schließen')
+        .setStyle(ButtonStyle.Danger)
     );
 
-    await interaction.showModal(modal);
+    await channel.send({
+      content: `<@${interaction.user.id}>`,
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setAuthor({ name: "Support Ticket", iconURL: LOGO })
+          .setThumbnail(LOGO)
+          .setDescription("Beschreibe dein Problem.")
+          .setImage(BANNER)
+      ],
+      components: [row]
+    });
+
+    return interaction.reply({
+      content: `✅ Ticket erstellt: ${channel}`,
+      flags: MessageFlags.Ephemeral
+    });
   }
 
-  // 📢 Modal absenden
-  if (interaction.isModalSubmit() && interaction.customId === 'vorlage_modal') {
+  // CLOSE
+  if (interaction.isButton() && interaction.customId === 'close_ticket') {
+    await interaction.reply({ content: "Schließe...", flags: MessageFlags.Ephemeral });
+    setTimeout(() => interaction.channel.delete().catch(() => {}), 3000);
+  }
+
+  // ===== VORLAGE =====
+  if (interaction.isButton() && interaction.customId === 'open_vorlage') {
+
+    const menu = new ActionRowBuilder().addComponents(
+      new ChannelSelectMenuBuilder()
+        .setCustomId('select_channel')
+        .setPlaceholder('Wähle Channel')
+    );
+
+    return interaction.reply({
+      content: "📍 Wähle Channel:",
+      components: [menu],
+      flags: MessageFlags.Ephemeral
+    });
+  }
+
+  if (interaction.isChannelSelectMenu()) {
+    const modal = new ModalBuilder()
+      .setCustomId(`vorlage_${interaction.values[0]}`)
+      .setTitle('Vorlage');
+
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('titel')
+          .setLabel('Titel')
+          .setStyle(TextInputStyle.Short)
+      ),
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('text')
+          .setLabel('Text')
+          .setStyle(TextInputStyle.Paragraph)
+      )
+    );
+
+    return interaction.showModal(modal);
+  }
+
+  if (interaction.isModalSubmit() && interaction.customId.startsWith('vorlage_')) {
+
+    const channel = interaction.guild.channels.cache.get(
+      interaction.customId.split('_')[1]
+    );
 
     const embed = new EmbedBuilder()
       .setColor(0x00ff00)
-      .setTitle(`📢 ${interaction.fields.getTextInputValue('titel')}`)
+      .setAuthor({ name: interaction.fields.getTextInputValue('titel'), iconURL: LOGO })
+      .setThumbnail(LOGO)
       .setDescription(interaction.fields.getTextInputValue('text'))
-      .setImage("https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png?ex=69f1be8e&is=69f06d0e&hm=f3d564ac33f15aaba8aca8953b2944f9087a330c6b00b10e4cd43bbcda00acaa&
+      .setImage(BANNER);
 
-    await interaction.reply({ embeds: [embed] });
+    await channel.send({ embeds: [embed] });
+
+    return interaction.reply({
+      content: `✅ Gesendet in ${channel}`,
+      flags: MessageFlags.Ephemeral
+    });
   }
 
 });
 
-// 🚪 Welcome
+// 👋 WELCOME
 client.on('guildMemberAdd', member => {
   const channel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
-  if (channel) {
-    channel.send(`Willkommen <@${member.id}>`);
-  }
+  if (!channel) return;
+
+  channel.send({
+    embeds: [
+      new EmbedBuilder()
+        .setColor(0x00ff00)
+        .setAuthor({ name: "Willkommen!", iconURL: LOGO })
+        .setThumbnail(LOGO)
+        .setDescription(`Willkommen <@${member.id}>!`)
+        .setImage(BANNER)
+    ]
+  });
 });
 
 // 🔐 LOGIN
