@@ -54,26 +54,26 @@ const commands = [
     .addStringOption(o => o.setName('kennzeichen').setDescription('Kennzeichen').setRequired(true))
     .addAttachmentOption(o => o.setName('bild').setDescription('Bild').setRequired(true)),
 
-  new SlashCommandBuilder()
-    .setName('familie')
-    .setDescription('Familien Auftrag')
-    .addStringOption(o =>
-      o.setName('typ')
-       .setDescription('Typ')
-       .setRequired(true)
-       .addChoices(
-         { name: 'Primer', value: 'Primer' },
-         { name: 'Sekundär', value: 'Sekundär' },
-         { name: 'Perleffekt', value: 'Perleffekt' },
-         { name: 'Unterboden', value: 'Unterboden' },
-         { name: 'Zusatz', value: 'Zusatz' }
-       )
-    )
-    .addStringOption(o =>
-      o.setName('text')
-       .setDescription('Beschreibung')
-       .setRequired(true)
-    )
+ new SlashCommandBuilder()
+  .setName('familie')
+  .setDescription('Familien Auftrag')
+  .addStringOption(o =>
+    o.setName('typ')
+     .setDescription('Typ auswählen')
+     .setRequired(true)
+     .addChoices(
+       { name: 'Primer', value: 'Primer' },
+       { name: 'Sekundär', value: 'Sekundär' },
+       { name: 'Perleffekt', value: 'Perleffekt' },
+       { name: 'Unterboden', value: 'Unterboden' },
+       { name: 'Extra', value: 'Extra' }
+     )
+  )
+  .addStringOption(o =>
+    o.setName('text')
+     .setDescription('Beschreibung')
+     .setRequired(true)
+  )
 
 ].map(c => c.toJSON());
 
@@ -94,33 +94,56 @@ client.once('clientReady', async () => {
   const ticket = await client.channels.fetch(TICKET_PANEL_ID).catch(() => null);
   if (ticket) {
     await ticket.send({
-      content: "🎟️ Support öffnen",
-      components: [
-        new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId('open_ticket')
-            .setLabel('🎟️ Ticket')
-            .setStyle(ButtonStyle.Success)
-        )
-      ]
-    });
-  }
+  embeds: [
+    new EmbedBuilder()
+      .setColor(0x00ff00)
+      .setAuthor({ name: "🎫 Ticket öffnen", iconURL: LOGO })
+      .setThumbnail(LOGO)
+      .setDescription(
+`🎫 **Ticket öffnen**
+
+Hast du Probleme, oder Fragen?  
+Mach einfach ein Ticket auf  
+
+Wir helfen dir gerne weiter!`
+      )
+      .setImage(BANNER)
+  ],
+  components: [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('open_ticket')
+        .setLabel('🎟️ Ticket öffnen')
+        .setStyle(ButtonStyle.Success)
+    )
+  ]
+});
 
   // Vorlage Panel
   const vorlage = await client.channels.fetch(VORLAGE_PANEL_ID).catch(() => null);
   if (vorlage) {
     await vorlage.send({
-      content: "📢 Vorlage erstellen",
-      components: [
-        new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId('open_vorlage')
-            .setLabel('📢 Start')
-            .setStyle(ButtonStyle.Primary)
-        )
-      ]
-    });
-  }
+  embeds: [
+    new EmbedBuilder()
+      .setColor(0x00ff00)
+      .setAuthor({ name: "📢 Vorlage System", iconURL: LOGO })
+      .setThumbnail(LOGO)
+      .setDescription(
+`📢 **Vorlage erstellen**
+
+Erstelle ganz einfach eine Vorlage  
+und sende sie direkt in den gewünschten Channel.`
+      )
+      .setImage(BANNER)
+  ],
+  components: [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('open_vorlage')
+        .setLabel('📢 Vorlage erstellen')
+        .setStyle(ButtonStyle.Primary)
+    )
+  ]
 });
 
 // ===== INTERACTIONS =====
@@ -166,21 +189,21 @@ client.on('interactionCreate', async interaction => {
   }
 
   // ===== FAMILIE =====
-  if (interaction.isChatInputCommand() && interaction.commandName === 'familie') {
+ if (interaction.commandName === 'familie') {
 
-    return interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setColor(0x00ff00)
-          .setAuthor({ name: "🎨 Familien Auftrag", iconURL: LOGO })
-          .setThumbnail(LOGO)
-          .addFields(
-            { name: "🎯 Typ", value: interaction.options.getString('typ') },
-            { name: "📝 Details", value: interaction.options.getString('text') }
-          )
-      ]
-    });
-  }
+  return interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setColor(0x00ff00)
+        .setAuthor({ name: "🎨 Familien Auftrag", iconURL: LOGO })
+        .setThumbnail(LOGO)
+        .addFields(
+          { name: "🎯 Typ", value: interaction.options.getString('typ') },
+          { name: "📝 Details", value: interaction.options.getString('text') }
+        )
+    ]
+  });
+}
 
   // ===== TICKET =====
   if (interaction.isButton() && interaction.customId === 'open_ticket') {
