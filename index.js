@@ -28,15 +28,13 @@ const VORLAGE_PANEL_ID = "1498441200062169159";
 const CATEGORY_ID = "1321858825929621584";
 const WELCOME_CHANNEL_ID = "1457160970811080910";
 
-// 🖼️ BILDER
+// 🖼️ Bilder (Discord Links!)
 const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png?ex=69f1e6d7&is=69f09557&hm=d50c91502382112c78c5d6a8b7de5d497b846a17f3c4421f21b22ed77383eb58&";
-
 const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png?ex=69f1be8e&is=69f06d0e&hm=f3d564ac33f15aaba8aca8953b2944f9087a330c6b00b10e4cd43bbcda00acaa&";
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
 });
-
 
 // 🔥 COMMANDS
 const commands = [
@@ -44,20 +42,40 @@ const commands = [
   new SlashCommandBuilder()
     .setName('xenon')
     .setDescription('Xenon Auftrag')
-    .addStringOption(o => o.setName('kunde').setRequired(true))
-    .addStringOption(o => o.setName('kennzeichen').setRequired(true))
-    .addStringOption(o => o.setName('farbe').setRequired(true)),
+    .addStringOption(o =>
+      o.setName('kunde')
+       .setDescription('Kunde')
+       .setRequired(true)
+    )
+    .addStringOption(o =>
+      o.setName('kennzeichen')
+       .setDescription('Kennzeichen')
+       .setRequired(true)
+    )
+    .addStringOption(o =>
+      o.setName('farbe')
+       .setDescription('Farbe')
+       .setRequired(true)
+    ),
 
   new SlashCommandBuilder()
     .setName('stance')
     .setDescription('Stance Auftrag')
-    .addStringOption(o => o.setName('kunde').setRequired(true))
-    .addStringOption(o => o.setName('kennzeichen').setRequired(true))
+    .addStringOption(o =>
+      o.setName('kunde')
+       .setDescription('Kunde')
+       .setRequired(true)
+    )
+    .addStringOption(o =>
+      o.setName('kennzeichen')
+       .setDescription('Kennzeichen')
+       .setRequired(true)
+    )
 
 ].map(c => c.toJSON());
 
+// REGISTER COMMANDS
 const rest = new REST({ version: '10' }).setToken(TOKEN);
-
 (async () => {
   await rest.put(
     Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
@@ -155,10 +173,10 @@ client.on('interactionCreate', async interaction => {
     });
 
     await channel.send(`Support für <@${interaction.user.id}>`);
-    return interaction.reply({ content: `Ticket: ${channel}`, flags: MessageFlags.Ephemeral });
+    return interaction.reply({ content: `Ticket erstellt: ${channel}`, flags: MessageFlags.Ephemeral });
   }
 
-  // ===== VORLAGE SYSTEM =====
+  // ===== VORLAGE BUTTON =====
   if (interaction.isButton() && interaction.customId === 'open_vorlage') {
 
     const menu = new ActionRowBuilder().addComponents(
@@ -168,35 +186,47 @@ client.on('interactionCreate', async interaction => {
     );
 
     return interaction.reply({
-      content: "Channel auswählen:",
+      content: "📍 Channel auswählen:",
       components: [menu],
       flags: MessageFlags.Ephemeral
     });
   }
 
+  // ===== CHANNEL AUSWAHL =====
   if (interaction.isAnySelectMenu() && interaction.customId === 'select_channel') {
 
     const modal = new ModalBuilder()
       .setCustomId(`vorlage_${interaction.values[0]}`)
-      .setTitle('Vorlage');
+      .setTitle('Vorlage erstellen');
 
     modal.addComponents(
       new ActionRowBuilder().addComponents(
-        new TextInputBuilder().setCustomId('titel').setLabel('Titel').setStyle(TextInputStyle.Short)
+        new TextInputBuilder()
+          .setCustomId('titel')
+          .setLabel('Titel')
+          .setStyle(TextInputStyle.Short)
       ),
       new ActionRowBuilder().addComponents(
-        new TextInputBuilder().setCustomId('text').setLabel('Text').setStyle(TextInputStyle.Paragraph)
+        new TextInputBuilder()
+          .setCustomId('text')
+          .setLabel('Text')
+          .setStyle(TextInputStyle.Paragraph)
       )
     );
 
     return interaction.showModal(modal);
   }
 
+  // ===== MODAL =====
   if (interaction.isModalSubmit() && interaction.customId.startsWith('vorlage_')) {
 
     const channel = interaction.guild.channels.cache.get(
       interaction.customId.split('_')[1]
     );
+
+    if (!channel) {
+      return interaction.reply({ content: "❌ Channel nicht gefunden", flags: MessageFlags.Ephemeral });
+    }
 
     const embed = new EmbedBuilder()
       .setColor(0x00ff00)
@@ -208,7 +238,7 @@ client.on('interactionCreate', async interaction => {
     await channel.send({ embeds: [embed] });
 
     return interaction.reply({
-      content: `Gesendet in ${channel}`,
+      content: `✅ Gesendet in ${channel}`,
       flags: MessageFlags.Ephemeral
     });
   }
