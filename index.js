@@ -29,7 +29,7 @@ const CATEGORY_ID = "1321858825929621584";
 const WELCOME_CHANNEL_ID = "1457160970811080910";
 
 // 🖼️ Bilder
-const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png?ex=69f1e6d7&is=69f09557&hm=d50c91502382112c78c5d6a8b7de5d497b846a17f3c4421f21b22ed77383eb58&";
+const LOGO = "hhttps://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png?ex=69f1e6d7&is=69f09557&hm=d50c91502382112c78c5d6a8b7de5d497b846a17f3c4421f21b22ed77383eb58&";
 const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png?ex=69f1be8e&is=69f06d0e&hm=f3d564ac33f15aaba8aca8953b2944f9087a330c6b00b10e4cd43bbcda00acaa&";
 
 const client = new Client({
@@ -54,26 +54,26 @@ const commands = [
     .addStringOption(o => o.setName('kennzeichen').setDescription('Kennzeichen').setRequired(true))
     .addAttachmentOption(o => o.setName('bild').setDescription('Bild').setRequired(true)),
 
- new SlashCommandBuilder()
-  .setName('familie')
-  .setDescription('Familien Auftrag')
-  .addStringOption(o =>
-    o.setName('typ')
-     .setDescription('Typ auswählen')
-     .setRequired(true)
-     .addChoices(
-       { name: 'Primer', value: 'Primer' },
-       { name: 'Sekundär', value: 'Sekundär' },
-       { name: 'Perleffekt', value: 'Perleffekt' },
-       { name: 'Unterboden', value: 'Unterboden' },
-       { name: 'Extra', value: 'Extra' }
-     )
-  )
-  .addStringOption(o =>
-    o.setName('text')
-     .setDescription('Beschreibung')
-     .setRequired(true)
-  )
+  new SlashCommandBuilder()
+    .setName('familie')
+    .setDescription('Familien Auftrag')
+    .addStringOption(o =>
+      o.setName('typ')
+       .setDescription('Typ auswählen')
+       .setRequired(true)
+       .addChoices(
+         { name: 'Primer', value: 'Primer' },
+         { name: 'Sekundär', value: 'Sekundär' },
+         { name: 'Perleffekt', value: 'Perleffekt' },
+         { name: 'Unterboden', value: 'Unterboden' },
+         { name: 'Extra', value: 'Extra' }
+       )
+    )
+    .addStringOption(o =>
+      o.setName('text')
+       .setDescription('Beschreibung')
+       .setRequired(true)
+    )
 
 ].map(c => c.toJSON());
 
@@ -90,66 +90,69 @@ const rest = new REST({ version: '10' }).setToken(TOKEN);
 client.once('clientReady', async () => {
   console.log(`Bot online: ${client.user.tag}`);
 
-  // Ticket Panel
+  // 🎟️ Ticket Panel
   const ticket = await client.channels.fetch(TICKET_PANEL_ID).catch(() => null);
   if (ticket) {
     await ticket.send({
-  embeds: [
-    new EmbedBuilder()
-      .setColor(0x00ff00)
-      .setAuthor({ name: "🎫 Ticket öffnen", iconURL: LOGO })
-      .setThumbnail(LOGO)
-      .setDescription(
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setAuthor({ name: "🎫 Ticket öffnen", iconURL: LOGO })
+          .setThumbnail(LOGO)
+          .setDescription(
 `🎫 **Ticket öffnen**
 
 Hast du Probleme, oder Fragen?  
 Mach einfach ein Ticket auf  
 
 Wir helfen dir gerne weiter!`
-      )
-      .setImage(BANNER)
-  ],
-  components: [
-    new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('open_ticket')
-        .setLabel('🎟️ Ticket öffnen')
-        .setStyle(ButtonStyle.Success)
-    )
-  ]
-});
+          )
+          .setImage(BANNER)
+      ],
+      components: [
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('open_ticket')
+            .setLabel('🎟️ Ticket öffnen')
+            .setStyle(ButtonStyle.Success)
+        )
+      ]
+    });
+  }
 
-  // Vorlage Panel
+  // 📢 Vorlage Panel
   const vorlage = await client.channels.fetch(VORLAGE_PANEL_ID).catch(() => null);
   if (vorlage) {
     await vorlage.send({
-  embeds: [
-    new EmbedBuilder()
-      .setColor(0x00ff00)
-      .setAuthor({ name: "📢 Vorlage System", iconURL: LOGO })
-      .setThumbnail(LOGO)
-      .setDescription(
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setAuthor({ name: "📢 Vorlage System", iconURL: LOGO })
+          .setThumbnail(LOGO)
+          .setDescription(
 `📢 **Vorlage erstellen**
 
 Erstelle ganz einfach eine Vorlage  
-und sende sie direkt in den gewünschten Channel.`
-      )
-      .setImage(BANNER)
-  ],
-  components: [
-    new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('open_vorlage')
-        .setLabel('📢 Vorlage erstellen')
-        .setStyle(ButtonStyle.Primary)
-    )
-  ]
+und sende sie in den gewünschten Channel.`
+          )
+          .setImage(BANNER)
+      ],
+      components: [
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId('open_vorlage')
+            .setLabel('📢 Vorlage erstellen')
+            .setStyle(ButtonStyle.Primary)
+        )
+      ]
+    });
+  }
 });
 
 // ===== INTERACTIONS =====
 client.on('interactionCreate', async interaction => {
 
-  // ===== XENON =====
+  // XENON
   if (interaction.isChatInputCommand() && interaction.commandName === 'xenon') {
     const bild = interaction.options.getAttachment('bild');
 
@@ -169,7 +172,7 @@ client.on('interactionCreate', async interaction => {
     });
   }
 
-  // ===== STANCE =====
+  // STANCE
   if (interaction.isChatInputCommand() && interaction.commandName === 'stance') {
     const bild = interaction.options.getAttachment('bild');
 
@@ -188,24 +191,23 @@ client.on('interactionCreate', async interaction => {
     });
   }
 
-  // ===== FAMILIE =====
- if (interaction.commandName === 'familie') {
+  // FAMILIE
+  if (interaction.isChatInputCommand() && interaction.commandName === 'familie') {
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setAuthor({ name: "🎨 Familien Auftrag", iconURL: LOGO })
+          .setThumbnail(LOGO)
+          .addFields(
+            { name: "🎯 Typ", value: interaction.options.getString('typ') },
+            { name: "📝 Details", value: interaction.options.getString('text') }
+          )
+      ]
+    });
+  }
 
-  return interaction.reply({
-    embeds: [
-      new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setAuthor({ name: "🎨 Familien Auftrag", iconURL: LOGO })
-        .setThumbnail(LOGO)
-        .addFields(
-          { name: "🎯 Typ", value: interaction.options.getString('typ') },
-          { name: "📝 Details", value: interaction.options.getString('text') }
-        )
-    ]
-  });
-}
-
-  // ===== TICKET =====
+  // TICKET OPEN
   if (interaction.isButton() && interaction.customId === 'open_ticket') {
 
     const channel = await interaction.guild.channels.create({
@@ -223,7 +225,7 @@ client.on('interactionCreate', async interaction => {
     return interaction.reply({ content: `Ticket erstellt: ${channel}`, flags: MessageFlags.Ephemeral });
   }
 
-  // ===== VORLAGE =====
+  // VORLAGE BUTTON
   if (interaction.isButton() && interaction.customId === 'open_vorlage') {
 
     const menu = new ActionRowBuilder().addComponents(
@@ -239,6 +241,7 @@ client.on('interactionCreate', async interaction => {
     });
   }
 
+  // SELECT → MODAL
   if (interaction.isAnySelectMenu() && interaction.customId === 'select_channel') {
 
     const modal = new ModalBuilder()
@@ -257,6 +260,7 @@ client.on('interactionCreate', async interaction => {
     return interaction.showModal(modal);
   }
 
+  // MODAL SENDEN
   if (interaction.isModalSubmit() && interaction.customId.startsWith('vorlage_')) {
 
     const channel = interaction.guild.channels.cache.get(
@@ -280,7 +284,7 @@ client.on('interactionCreate', async interaction => {
 
 });
 
-// ===== WELCOME =====
+// WELCOME
 client.on('guildMemberAdd', member => {
   const channel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
   if (!channel) return;
