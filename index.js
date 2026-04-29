@@ -10,25 +10,15 @@ const {
   TextInputStyle,
   StringSelectMenuBuilder,
   PermissionsBitField,
-  ChannelType,
-  MessageFlags,
-  REST,
-  Routes,
-  SlashCommandBuilder
+  ChannelType
 } = require('discord.js');
 
 const TOKEN = process.env.TOKEN;
 
 // ===== IDs =====
-const CLIENT_ID = "1496235501139660980";
-const GUILD_ID = "1321858825401401426";
-
 const PANEL_CHANNEL_ID = "1498441200062169159";
 const TICKET_PANEL_ID = "1498024704726929468";
 const LOG_CHANNEL_ID = "1496743068785709096";
-
-const XENON_CHANNEL_ID = "1439386475572756570";
-const STANCE_CHANNEL_ID = "1363997615305523411";
 const FAMILIE_CHANNEL_ID = "1442699333068783736";
 
 const SUPPORT_ROLE_ID = "1497953436514255089";
@@ -36,124 +26,99 @@ const CATEGORY_ID = "1321858825929621584";
 const WELCOME_CHANNEL_ID = "1457160970811080910";
 
 // ===== DESIGN =====
-const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png?ex=69f33857&is=69f1e6d7&hm=7259c0ea8487a73edb65d0d0197a164fe9d6ba671710d725eb9b5bb9302ff1c4&";
-const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png?ex=69f3b8ce&is=69f2674e&hm=5004d65b23e2aeb492d1c837f10ea688e64a8aa19deecaa05e79539aca0d6ef4&";
+const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png";
+const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image.png";
 
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers
   ]
 });
 
-const pending = new Map();
 const familieChoice = new Map();
 
 // ===== LOG =====
-function log(text) {
-  const ch = client.channels.cache.get(LOG_CHANNEL_ID);
+async function log(text) {
+  const ch = await client.channels.fetch(LOG_CHANNEL_ID).catch(() => null);
   if (ch) ch.send(text);
 }
 
 // ===== READY =====
 client.once('clientReady', async () => {
+  console.log("✅ Bot online");
 
-  // 📢 PANEL
   const panel = await client.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
   if (panel) {
     panel.send({
       embeds: [
         new EmbedBuilder()
           .setColor(0x00ff00)
-          .setAuthor({ name: "📢 Button System", iconURL: LOGO })
-          .setThumbnail(LOGO)
-          .setDescription(
-`📢 **Vorlage**
-Erstelle ganz einfach eine Vorlage
-
-🚗 **Aufträge**
-Erstelle Xenon oder Stance
-
-🎨 **Familie**
-Wähle Kategorie und erstelle Auftrag`
-          )
-          .setImage(BANNER)
+          .setDescription("📢 Button System")
       ],
       components: [
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('vorlage').setLabel('📢 Vorlage').setStyle(ButtonStyle.Primary),
-          new ButtonBuilder().setCustomId('xenon').setLabel('🚗 Xenon').setStyle(ButtonStyle.Success),
-          new ButtonBuilder().setCustomId('stance').setLabel('🏁 Stance').setStyle(ButtonStyle.Secondary),
-          new ButtonBuilder().setCustomId('familie').setLabel('🎨 Familie').setStyle(ButtonStyle.Secondary)
+          new ButtonBuilder().setCustomId('familie').setLabel('🎨 Familie').setStyle(ButtonStyle.Primary)
         )
       ]
     });
   }
 
-  // 🎟️ TICKET PANEL
   const ticketPanel = await client.channels.fetch(TICKET_PANEL_ID).catch(() => null);
   if (ticketPanel) {
     ticketPanel.send({
-      embeds: [
-        new EmbedBuilder()
-          .setColor(0x00ff00)
-          .setAuthor({ name: "🎫 Ticket öffnen", iconURL: LOGO })
-          .setThumbnail(LOGO)
-          .setDescription(
-`🎫 Ticket öffnen
-
-Hast du Probleme oder Fragen?
-Mach ein Ticket auf
-
-Wir helfen dir gerne!`
-          )
-          .setImage(BANNER)
-      ],
+      content: "🎟️ Ticket öffnen",
       components: [
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('ticket').setLabel('🎟️ Ticket öffnen').setStyle(ButtonStyle.Success)
+          new ButtonBuilder().setCustomId('ticket').setLabel('Ticket').setStyle(ButtonStyle.Success)
         )
       ]
     });
   }
-
 });
 
 // ===== INTERACTIONS =====
 client.on('interactionCreate', async interaction => {
-
-  // ===== BUTTONS =====
-  if (interaction.isButton()) {
-
-    // 🎟️ TICKET
-    client.on('interactionCreate', async interaction => {
   try {
 
-    // ===== BUTTONS =====
+    // ===== BUTTON =====
     if (interaction.isButton()) {
 
+      // 🎟️ Ticket
       if (interaction.customId === 'ticket') {
 
+        await interaction.deferReply({ ephemeral: true });
+
         const ch = await interaction.guild.channels.create({
-          name: `ticket-${interaction.user.id}`, // besser!
+          name: `ticket-${interaction.user.id}`,
           type: ChannelType.GuildText,
           parent: CATEGORY_ID,
           permissionOverwrites: [
-            { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-            { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
-            { id: SUPPORT_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
+            { id: interaction.guild.id, deny: ['ViewChannel'] },
+            { id: interaction.user.id, allow: ['ViewChannel', 'SendMessages'] },
+            { id: SUPPORT_ROLE_ID, allow: ['ViewChannel', 'SendMessages'] }
           ]
         });
 
+        ch.send(`🎟️ Support für <@${interaction.user.id}>`);
+        await interaction.editReply("✅ Ticket erstellt!");
+      }
+
+      // 🎨 Familie Button
+      if (interaction.customId === 'familie') {
+        const menu = new StringSelectMenuBuilder()
+          .setCustomId('familie_select')
+          .setPlaceholder('Kategorie wählen')
+          .addOptions([
+            { label: 'Primer', value: 'Primer' },
+            { label: 'Sekundär', value: 'Sekundär' }
+          ]);
+
         await interaction.reply({
-          content: "✅ Ticket erstellt!",
+          content: "Wähle Kategorie:",
+          components: [new ActionRowBuilder().addComponents(menu)],
           ephemeral: true
         });
-
-        ch.send(`🎟️ Support für <@${interaction.user.id}>`);
-        log(`🎟️ Ticket | ${interaction.user.tag}`);
       }
     }
 
@@ -166,14 +131,13 @@ client.on('interactionCreate', async interaction => {
 
         const modal = new ModalBuilder()
           .setCustomId('familie_modal')
-          .setTitle('Familien Auftrag')
+          .setTitle('Familie Auftrag')
           .addComponents(
             new ActionRowBuilder().addComponents(
               new TextInputBuilder()
                 .setCustomId('text')
                 .setLabel('Beschreibung')
                 .setStyle(TextInputStyle.Paragraph)
-                .setRequired(true)
             )
           );
 
@@ -188,37 +152,27 @@ client.on('interactionCreate', async interaction => {
         const typ = familieChoice.get(interaction.user.id);
         const text = interaction.fields.getTextInputValue('text');
 
-        const embed = new EmbedBuilder()
-          .setColor(0x00ff00)
-          .setAuthor({ name: "🎨 Familien Auftrag", iconURL: LOGO })
-          .addFields(
-            { name: "Typ", value: typ || "Unbekannt" },
-            { name: "Beschreibung", value: text }
-          );
-
         const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID).catch(() => null);
 
-        if (!ch) {
-          return interaction.reply({ content: "❌ Kanal nicht gefunden", ephemeral: true });
+        if (ch) {
+          ch.send(`🎨 ${typ}: ${text}`);
         }
 
-        ch.send({ embeds: [embed] });
-
-        familieChoice.delete(interaction.user.id); // wichtig!
+        familieChoice.delete(interaction.user.id);
 
         await interaction.reply({
-          content: "✅ Auftrag gesendet!",
+          content: "✅ Gesendet!",
           ephemeral: true
         });
       }
     }
 
   } catch (err) {
-    console.error("❌ ERROR:", err);
+    console.error(err);
 
     if (!interaction.replied) {
       await interaction.reply({
-        content: "❌ Fehler beim Ausführen!",
+        content: "❌ Fehler!",
         ephemeral: true
       });
     }
@@ -226,21 +180,11 @@ client.on('interactionCreate', async interaction => {
 });
 
 // ===== WELCOME =====
-client.on('guildMemberAdd', member => {
-  const ch = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
+client.on('guildMemberAdd', async member => {
+  const ch = await member.guild.channels.fetch(WELCOME_CHANNEL_ID).catch(() => null);
   if (ch) {
-    ch.send({
-      embeds: [
-        new EmbedBuilder()
-          .setColor(0x00ff00)
-          .setAuthor({ name: "Willkommen!", iconURL: LOGO })
-          .setThumbnail(LOGO)
-          .setDescription(`Willkommen <@${member.id}>`)
-          .setImage(BANNER)
-      ]
-    });
+    ch.send(`Willkommen <@${member.id}>`);
   }
-  log(`👋 Join: ${member.user.tag}`);
 });
 
 client.login(TOKEN);
