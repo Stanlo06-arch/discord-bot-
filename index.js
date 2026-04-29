@@ -175,30 +175,28 @@ client.on('interactionCreate', async interaction => {
   // ===== DROPDOWN =====
   if (interaction.isStringSelectMenu()) {
 
-    if (interaction.customId === 'familie_select') {
+  if (interaction.customId === 'familie_select') {
 
-      const typ = interaction.values[0];
-      familieChoice.set(interaction.user.id, typ);
+    const typ = interaction.values[0];
+    familieChoice.set(interaction.user.id, typ);
 
-      await interaction.deferUpdate();
+    const modal = new ModalBuilder()
+      .setCustomId('familie_modal')
+      .setTitle('Familien Auftrag');
 
-      const modal = new ModalBuilder()
-        .setCustomId('familie_modal')
-        .setTitle('Familien Auftrag');
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('text')
+          .setLabel('Beschreibung')
+          .setStyle(TextInputStyle.Paragraph)
+          .setRequired(true)
+      )
+    );
 
-      modal.addComponents(
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder()
-            .setCustomId('text')
-            .setLabel('Beschreibung')
-            .setStyle(TextInputStyle.Paragraph)
-            .setRequired(true)
-        )
-      );
-
-      return interaction.showModal(modal);
-    }
+    return interaction.showModal(modal); // ❗ OHNE deferUpdate
   }
+}
 
   // ===== MODAL =====
   if (interaction.isModalSubmit()) {
