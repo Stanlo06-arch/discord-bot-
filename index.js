@@ -8,7 +8,6 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  PermissionsBitField,
   ChannelType
 } = require('discord.js');
 
@@ -37,14 +36,13 @@ const client = new Client({
   ]
 });
 
-// ===== TEMP =====
+// ===== TEMP STORAGE =====
 const pending = new Map();
 
 // ===== READY =====
 client.once('clientReady', async () => {
   console.log("✅ Bot online");
 
-  // PANEL
   const panel = await client.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
   if (panel) {
     panel.send({
@@ -52,8 +50,8 @@ client.once('clientReady', async () => {
         new EmbedBuilder()
           .setColor(0x00ff00)
           .setAuthor({ name: "Top Gear Performance", iconURL: LOGO })
-          .setDescription("Wähle eine Aktion")
           .setThumbnail(LOGO)
+          .setDescription("Wähle eine Aktion")
           .setImage(BANNER)
       ],
       components: [
@@ -67,7 +65,6 @@ client.once('clientReady', async () => {
     });
   }
 
-  // TICKET PANEL
   const ticket = await client.channels.fetch(TICKET_PANEL_ID).catch(() => null);
   if (ticket) {
     ticket.send({
@@ -207,11 +204,9 @@ client.on('interactionCreate', async interaction => {
       }
 
       if (interaction.customId === 'xenon' || interaction.customId === 'stance') {
-
         pending.set(interaction.user.id, {
           type: interaction.customId,
           data: interaction.fields,
-          step: 1,
           images: []
         });
 
@@ -252,7 +247,6 @@ client.on('messageCreate', async msg => {
   if (!user) return;
 
   const url = msg.attachments.first().url;
-
   user.images.push(url);
 
   await msg.delete().catch(() => {});
@@ -261,7 +255,6 @@ client.on('messageCreate', async msg => {
     return msg.channel.send("📸 Bitte sende Bild 2");
   }
 
-  // FINAL EMBED
   if (user.type === 'xenon') {
     const embed = new EmbedBuilder()
       .setColor(0x00ff00)
@@ -275,8 +268,7 @@ Pearl: Race Yellow`
       .setImage(user.images[0]);
 
     const ch = await client.channels.fetch(XENON_CHANNEL_ID);
-    ch.send({ embeds: [embed] });
-    ch.send(user.images[1]);
+    ch.send({ embeds: [embed], files: [user.images[1]] });
   }
 
   if (user.type === 'stance') {
@@ -291,8 +283,7 @@ Kennzeichen: ${user.data.getTextInputValue('kz')}`
       .setImage(user.images[0]);
 
     const ch = await client.channels.fetch(STANCE_CHANNEL_ID);
-    ch.send({ embeds: [embed] });
-    ch.send(user.images[1]);
+    ch.send({ embeds: [embed], files: [user.images[1]] });
   }
 
   pending.delete(msg.author.id);
