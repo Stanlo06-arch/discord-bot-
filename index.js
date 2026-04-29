@@ -24,13 +24,13 @@ const GUILD_ID = "1321858825401401426";
 
 const PANEL_CHANNEL_ID = "1498441200062169159";
 const TICKET_PANEL_ID = "1498024704726929468";
+const LOG_CHANNEL_ID = "1496743068785709096";
 
 const XENON_CHANNEL_ID = "1439386475572756570";
 const STANCE_CHANNEL_ID = "1363997615305523411";
 
 const SUPPORT_ROLE_ID = "1497953436514255089";
 const CATEGORY_ID = "1321858825929621584";
-
 const WELCOME_CHANNEL_ID = "1457160970811080910";
 
 // ===== DESIGN =====
@@ -49,6 +49,12 @@ const client = new Client({
 // ===== TEMP STORAGE =====
 const pending = new Map();
 
+// ===== LOG FUNCTION =====
+async function sendLog(text) {
+  const ch = client.channels.cache.get(LOG_CHANNEL_ID);
+  if (!ch) return;
+  ch.send({ content: text });
+}
 
 // ===== SLASH COMMAND =====
 const commands = [
@@ -82,7 +88,6 @@ const rest = new REST({ version: '10' }).setToken(TOKEN);
   );
 })();
 
-
 // ===== READY =====
 client.once('clientReady', async () => {
   console.log(`Bot online: ${client.user.tag}`);
@@ -98,29 +103,20 @@ client.once('clientReady', async () => {
           .setThumbnail(LOGO)
           .setDescription(
 `📢 **Vorlage**
-Erstelle ganz einfach eine Vorlage
+Erstelle ganz einfach eine Vorlage für Ankündigungen
 
 🚗 **Aufträge**
-Erstelle Xenon oder Stance Aufträge`
+Erstelle einen Auftrag für Xenon oder Stance`
           )
           .setImage(BANNER)
       ],
       components: [
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId('vorlage')
-            .setLabel('📢 Vorlage')
-            .setStyle(ButtonStyle.Primary)
+          new ButtonBuilder().setCustomId('vorlage').setLabel('📢 Vorlage').setStyle(ButtonStyle.Primary)
         ),
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId('xenon')
-            .setLabel('🚗 Xenon')
-            .setStyle(ButtonStyle.Success),
-          new ButtonBuilder()
-            .setCustomId('stance')
-            .setLabel('🏁 Stance')
-            .setStyle(ButtonStyle.Secondary)
+          new ButtonBuilder().setCustomId('xenon').setLabel('🚗 Xenon').setStyle(ButtonStyle.Success),
+          new ButtonBuilder().setCustomId('stance').setLabel('🏁 Stance').setStyle(ButtonStyle.Secondary)
         )
       ]
     });
@@ -147,23 +143,19 @@ Wir helfen dir gerne weiter!`
       ],
       components: [
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId('open_ticket')
-            .setLabel('🎟️ Ticket öffnen')
-            .setStyle(ButtonStyle.Success)
+          new ButtonBuilder().setCustomId('open_ticket').setLabel('🎟️ Ticket öffnen').setStyle(ButtonStyle.Success)
         )
       ]
     });
   }
 });
 
-
 // ===== INTERACTIONS =====
 client.on('interactionCreate', async interaction => {
 
-  // ===== BUTTONS =====
   if (interaction.isButton()) {
 
+    // VORLAGE
     if (interaction.customId === 'vorlage') {
       const modal = new ModalBuilder()
         .setCustomId('vorlage_modal')
@@ -181,6 +173,7 @@ client.on('interactionCreate', async interaction => {
       return interaction.showModal(modal);
     }
 
+    // XENON
     if (interaction.customId === 'xenon') {
       const modal = new ModalBuilder()
         .setCustomId('xenon_modal')
@@ -201,6 +194,7 @@ client.on('interactionCreate', async interaction => {
       return interaction.showModal(modal);
     }
 
+    // STANCE
     if (interaction.customId === 'stance') {
       const modal = new ModalBuilder()
         .setCustomId('stance_modal')
@@ -218,26 +212,26 @@ client.on('interactionCreate', async interaction => {
       return interaction.showModal(modal);
     }
 
-    // ===== TICKET OPEN =====
+    // 🎟️ TICKET
     if (interaction.customId === 'open_ticket') {
-
       const channel = await interaction.guild.channels.create({
         name: `ticket-${interaction.user.username}`,
         type: ChannelType.GuildText,
         parent: CATEGORY_ID,
         permissionOverwrites: [
           { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-          { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel] },
-          { id: SUPPORT_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel] }
+          { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+          { id: SUPPORT_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
         ]
       });
 
       await channel.send(`Support für <@${interaction.user.id}>`);
+      sendLog(`🎟️ Ticket erstellt | ${interaction.user.tag}`);
       return interaction.reply({ content: `Ticket erstellt: ${channel}`, flags: MessageFlags.Ephemeral });
     }
   }
 
-  // ===== MODAL =====
+  // ===== MODALS =====
   if (interaction.isModalSubmit()) {
 
     if (interaction.customId === 'vorlage_modal') {
@@ -256,102 +250,114 @@ client.on('interactionCreate', async interaction => {
     if (interaction.customId === 'xenon_modal') {
       pending.set(interaction.user.id, {
         type: 'xenon',
+        images: [],
         kunde: interaction.fields.getTextInputValue('kunde'),
         kennzeichen: interaction.fields.getTextInputValue('kennzeichen'),
         farbe: interaction.fields.getTextInputValue('farbe')
       });
 
-      return interaction.reply({ content: "🚗 Bild senden 📸", flags: MessageFlags.Ephemeral });
+      return interaction.reply({ content: "🚗 Sende max. 2 Bilder 📸", flags: MessageFlags.Ephemeral });
     }
 
     if (interaction.customId === 'stance_modal') {
       pending.set(interaction.user.id, {
         type: 'stance',
+        images: [],
         kunde: interaction.fields.getTextInputValue('kunde'),
         kennzeichen: interaction.fields.getTextInputValue('kennzeichen')
       });
 
-      return interaction.reply({ content: "🏁 Bild senden 📸", flags: MessageFlags.Ephemeral });
+      return interaction.reply({ content: "🏁 Sende max. 2 Bilder 📸", flags: MessageFlags.Ephemeral });
     }
+  }
 
-    // ===== FAMILIE =====
-    if (interaction.isChatInputCommand() && interaction.commandName === 'familie') {
-      return interaction.reply({
-        embeds: [
-          new EmbedBuilder()
-            .setColor(0x00ff00)
-            .setAuthor({ name: "🎨 Familien Auftrag", iconURL: LOGO })
-            .setThumbnail(LOGO)
-            .addFields(
-              { name: "Typ", value: interaction.options.getString('typ') },
-              { name: "Details", value: interaction.options.getString('text') }
-            )
-        ]
-      });
-    }
+  // ===== FAMILIE =====
+  if (interaction.isChatInputCommand() && interaction.commandName === 'familie') {
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setAuthor({ name: "🎨 Familien Auftrag", iconURL: LOGO })
+          .setThumbnail(LOGO)
+          .addFields(
+            { name: "Typ", value: interaction.options.getString('typ') },
+            { name: "Details", value: interaction.options.getString('text') }
+          )
+      ]
+    });
   }
 });
 
-
-// ===== BILD =====
+// ===== BILDER =====
 client.on('messageCreate', async message => {
   if (message.author.bot) return;
 
   const data = pending.get(message.author.id);
-  if (!data || !message.attachments.size) return;
+  if (!data) return;
+  if (!message.attachments.size) return;
 
-  const bild = message.attachments.first();
+  const img = message.attachments.first();
+  data.images.push(img.url);
 
-  let embed;
+  // DELETE IMAGE
+  message.delete().catch(() => {});
 
-  if (data.type === 'xenon') {
-    embed = new EmbedBuilder()
+  if (data.images.length >= 2) {
+
+    let embed = new EmbedBuilder()
       .setColor(0x00ff00)
-      .setAuthor({ name: "🚗 Xenon Auftrag", iconURL: LOGO })
-      .setThumbnail(LOGO)
-      .addFields(
-        { name: "Kunde", value: data.kunde },
-        { name: "Kennzeichen", value: data.kennzeichen },
-        { name: "Farbe", value: data.farbe }
-      )
-      .setImage(bild.url);
+      .setThumbnail(LOGO);
 
-    client.channels.cache.get(XENON_CHANNEL_ID).send({ embeds: [embed] });
+    if (data.type === 'xenon') {
+      embed.setAuthor({ name: "🚗 Xenon Auftrag", iconURL: LOGO })
+        .addFields(
+          { name: "Kunde", value: data.kunde },
+          { name: "Kennzeichen", value: data.kennzeichen },
+          { name: "Farbe", value: data.farbe }
+        )
+        .setImage(data.images[0]);
+
+      client.channels.cache.get(XENON_CHANNEL_ID).send({ embeds: [embed], files: [data.images[1]] });
+      sendLog(`🚗 Xenon | ${message.author.tag}`);
+    }
+
+    if (data.type === 'stance') {
+      embed.setAuthor({ name: "🏁 Stance Auftrag", iconURL: LOGO })
+        .addFields(
+          { name: "Kunde", value: data.kunde },
+          { name: "Kennzeichen", value: data.kennzeichen }
+        )
+        .setImage(data.images[0]);
+
+      client.channels.cache.get(STANCE_CHANNEL_ID).send({ embeds: [embed], files: [data.images[1]] });
+      sendLog(`🏁 Stance | ${message.author.tag}`);
+    }
+
+    pending.delete(message.author.id);
   }
-
-  if (data.type === 'stance') {
-    embed = new EmbedBuilder()
-      .setColor(0x00ff00)
-      .setAuthor({ name: "🏁 Stance Auftrag", iconURL: LOGO })
-      .setThumbnail(LOGO)
-      .addFields(
-        { name: "Kunde", value: data.kunde },
-        { name: "Kennzeichen", value: data.kennzeichen }
-      )
-      .setImage(bild.url);
-
-    client.channels.cache.get(STANCE_CHANNEL_ID).send({ embeds: [embed] });
-  }
-
-  pending.delete(message.author.id);
 });
 
-
-// ===== WELCOME =====
+// ===== JOIN =====
 client.on('guildMemberAdd', member => {
-  const channel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
-  if (!channel) return;
+  const ch = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
+  if (ch) {
+    ch.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setAuthor({ name: "Willkommen!", iconURL: LOGO })
+          .setThumbnail(LOGO)
+          .setDescription(`Willkommen <@${member.id}>`)
+          .setImage(BANNER)
+      ]
+    });
+  }
+  sendLog(`👋 Join: ${member.user.tag}`);
+});
 
-  channel.send({
-    embeds: [
-      new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setAuthor({ name: "Willkommen!", iconURL: LOGO })
-        .setThumbnail(LOGO)
-        .setDescription(`Willkommen <@${member.id}>`)
-        .setImage(BANNER)
-    ]
-  });
+// ===== SERVER LOG =====
+client.on('channelCreate', ch => {
+  sendLog(`📁 Channel erstellt: ${ch.name}`);
 });
 
 client.login(TOKEN);
