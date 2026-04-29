@@ -36,8 +36,8 @@ const CATEGORY_ID = "1321858825929621584";
 const WELCOME_CHANNEL_ID = "1457160970811080910";
 
 // ===== DESIGN =====
-const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png?ex=69f33857&is=69f1e6d7&hm=7259c0ea8487a73edb65d0d0197a164fe9d6ba671710d725eb9b5bb9302ff1c4&";
-const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png?ex=69f3100e&is=69f1be8e&hm=82e8fb16e5860638b0accda11170aec44947039d6d4af7d6a9357b7bfdf72794&";
+const LOGO = "LOGO_LINK";
+const BANNER = "BANNER_LINK";
 
 const client = new Client({
   intents: [
@@ -60,6 +60,7 @@ function log(text) {
 // ===== READY =====
 client.once('clientReady', async () => {
 
+  // 📢 PANEL
   const panel = await client.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
   if (panel) {
     panel.send({
@@ -76,7 +77,7 @@ Erstelle ganz einfach eine Vorlage
 Erstelle Xenon oder Stance
 
 🎨 **Familie**
-Wähle eine Kategorie und erstelle Auftrag`
+Wähle Kategorie und erstelle Auftrag`
           )
           .setImage(BANNER)
       ],
@@ -91,14 +92,65 @@ Wähle eine Kategorie und erstelle Auftrag`
     });
   }
 
+  // 🎟️ TICKET PANEL
+  const ticketPanel = await client.channels.fetch(TICKET_PANEL_ID).catch(() => null);
+  if (ticketPanel) {
+    ticketPanel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setAuthor({ name: "🎫 Ticket öffnen", iconURL: LOGO })
+          .setThumbnail(LOGO)
+          .setDescription(
+`🎫 Ticket öffnen
+
+Hast du Probleme oder Fragen?
+Mach ein Ticket auf
+
+Wir helfen dir gerne!`
+          )
+          .setImage(BANNER)
+      ],
+      components: [
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('ticket').setLabel('🎟️ Ticket öffnen').setStyle(ButtonStyle.Success)
+        )
+      ]
+    });
+  }
+
 });
 
-// ===== INTERACTION =====
+// ===== INTERACTIONS =====
 client.on('interactionCreate', async interaction => {
 
   // ===== BUTTONS =====
   if (interaction.isButton()) {
 
+    // 🎟️ TICKET
+    if (interaction.customId === 'ticket') {
+
+      const ch = await interaction.guild.channels.create({
+        name: `ticket-${interaction.user.username}`,
+        type: ChannelType.GuildText,
+        parent: CATEGORY_ID,
+        permissionOverwrites: [
+          { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+          { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+          { id: SUPPORT_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
+        ]
+      });
+
+      ch.send(`🎟️ Support für <@${interaction.user.id}>`);
+      log(`🎟️ Ticket | ${interaction.user.tag}`);
+
+      return interaction.reply({
+        content: "✅ Ticket erstellt!",
+        flags: MessageFlags.Ephemeral
+      });
+    }
+
+    // 🎨 FAMILIE BUTTON
     if (interaction.customId === 'familie') {
 
       const menu = new StringSelectMenuBuilder()
@@ -113,7 +165,7 @@ client.on('interactionCreate', async interaction => {
         ]);
 
       return interaction.reply({
-        content: "Wähle eine Kategorie:",
+        content: "Kategorie wählen:",
         components: [new ActionRowBuilder().addComponents(menu)],
         flags: MessageFlags.Ephemeral
       });
@@ -123,31 +175,30 @@ client.on('interactionCreate', async interaction => {
   // ===== DROPDOWN =====
   if (interaction.isStringSelectMenu()) {
 
-  if (interaction.customId === 'familie_select') {
+    if (interaction.customId === 'familie_select') {
 
-    const typ = interaction.values[0];
-    familieChoice.set(interaction.user.id, typ);
+      const typ = interaction.values[0];
+      familieChoice.set(interaction.user.id, typ);
 
-    // 🔥 WICHTIG
-    await interaction.deferUpdate();
+      await interaction.deferUpdate();
 
-    const modal = new ModalBuilder()
-      .setCustomId('familie_modal')
-      .setTitle('Familien Auftrag');
+      const modal = new ModalBuilder()
+        .setCustomId('familie_modal')
+        .setTitle('Familien Auftrag');
 
-    modal.addComponents(
-      new ActionRowBuilder().addComponents(
-        new TextInputBuilder()
-          .setCustomId('text')
-          .setLabel('Beschreibung')
-          .setStyle(TextInputStyle.Paragraph)
-          .setRequired(true)
-      )
-    );
+      modal.addComponents(
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('text')
+            .setLabel('Beschreibung')
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(true)
+        )
+      );
 
-    return interaction.showModal(modal);
+      return interaction.showModal(modal);
+    }
   }
-}
 
   // ===== MODAL =====
   if (interaction.isModalSubmit()) {
@@ -178,6 +229,24 @@ client.on('interactionCreate', async interaction => {
     }
   }
 
+});
+
+// ===== WELCOME =====
+client.on('guildMemberAdd', member => {
+  const ch = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
+  if (ch) {
+    ch.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setAuthor({ name: "Willkommen!", iconURL: LOGO })
+          .setThumbnail(LOGO)
+          .setDescription(`Willkommen <@${member.id}>`)
+          .setImage(BANNER)
+      ]
+    });
+  }
+  log(`👋 Join: ${member.user.tag}`);
 });
 
 client.login(TOKEN);
