@@ -19,6 +19,9 @@ const TOKEN = process.env.TOKEN;
 const PANEL_CHANNEL_ID = "1498441200062169159";
 const TICKET_PANEL_ID = "1498024704726929468";
 const LOG_CHANNEL_ID = "1496743068785709096";
+
+const XENON_CHANNEL_ID = "1439386475572756570";
+const STANCE_CHANNEL_ID = "1363997615305523411";
 const FAMILIE_CHANNEL_ID = "1442699333068783736";
 
 const SUPPORT_ROLE_ID = "1497953436514255089";
@@ -27,7 +30,7 @@ const WELCOME_CHANNEL_ID = "1457160970811080910";
 
 // ===== DESIGN =====
 const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png";
-const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image.png";
+const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23.png";
 
 const client = new Client({
   intents: [
@@ -54,11 +57,26 @@ client.once('clientReady', async () => {
       embeds: [
         new EmbedBuilder()
           .setColor(0x00ff00)
-          .setDescription("📢 Button System")
+          .setAuthor({ name: "📢 Button System", iconURL: LOGO })
+          .setThumbnail(LOGO)
+          .setDescription(
+`📢 **Vorlage**
+Erstelle ganz einfach eine Vorlage
+
+🚗 **Aufträge**
+Erstelle Xenon oder Stance
+
+🎨 **Familie**
+Wähle Kategorie und erstelle Auftrag`
+          )
+          .setImage(BANNER)
       ],
       components: [
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('familie').setLabel('🎨 Familie').setStyle(ButtonStyle.Primary)
+          new ButtonBuilder().setCustomId('vorlage').setLabel('📢 Vorlage').setStyle(ButtonStyle.Primary),
+          new ButtonBuilder().setCustomId('xenon').setLabel('🚗 Xenon').setStyle(ButtonStyle.Success),
+          new ButtonBuilder().setCustomId('stance').setLabel('🏁 Stance').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('familie').setLabel('🎨 Familie').setStyle(ButtonStyle.Secondary)
         )
       ]
     });
@@ -67,10 +85,15 @@ client.once('clientReady', async () => {
   const ticketPanel = await client.channels.fetch(TICKET_PANEL_ID).catch(() => null);
   if (ticketPanel) {
     ticketPanel.send({
-      content: "🎟️ Ticket öffnen",
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setDescription("🎫 Ticket öffnen")
+          .setImage(BANNER)
+      ],
       components: [
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('ticket').setLabel('Ticket').setStyle(ButtonStyle.Success)
+          new ButtonBuilder().setCustomId('ticket').setLabel('🎟️ Ticket öffnen').setStyle(ButtonStyle.Success)
         )
       ]
     });
@@ -81,12 +104,11 @@ client.once('clientReady', async () => {
 client.on('interactionCreate', async interaction => {
   try {
 
-    // ===== BUTTON =====
+    // ===== BUTTONS =====
     if (interaction.isButton()) {
 
       // 🎟️ Ticket
       if (interaction.customId === 'ticket') {
-
         await interaction.deferReply({ ephemeral: true });
 
         const ch = await interaction.guild.channels.create({
@@ -104,21 +126,44 @@ client.on('interactionCreate', async interaction => {
         await interaction.editReply("✅ Ticket erstellt!");
       }
 
-      // 🎨 Familie Button
+      // 🎨 Familie
       if (interaction.customId === 'familie') {
         const menu = new StringSelectMenuBuilder()
           .setCustomId('familie_select')
           .setPlaceholder('Kategorie wählen')
           .addOptions([
             { label: 'Primer', value: 'Primer' },
-            { label: 'Sekundär', value: 'Sekundär' }
+            { label: 'Sekundär', value: 'Sekundär' },
+            { label: 'Perleffekt', value: 'Perleffekt' },
+            { label: 'Unterboden', value: 'Unterboden' },
+            { label: 'Extra', value: 'Extra' }
           ]);
 
         await interaction.reply({
-          content: "Wähle Kategorie:",
+          content: "Kategorie wählen:",
           components: [new ActionRowBuilder().addComponents(menu)],
           ephemeral: true
         });
+      }
+
+      // 📢 Vorlage / Xenon / Stance (Modal)
+      if (['vorlage', 'xenon', 'stance'].includes(interaction.customId)) {
+
+        const modal = new ModalBuilder()
+          .setCustomId(`modal_${interaction.customId}`)
+          .setTitle("Auftrag erstellen");
+
+        modal.addComponents(
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('text')
+              .setLabel('Beschreibung')
+              .setStyle(TextInputStyle.Paragraph)
+              .setRequired(true)
+          )
+        );
+
+        await interaction.showModal(modal);
       }
     }
 
@@ -131,13 +176,14 @@ client.on('interactionCreate', async interaction => {
 
         const modal = new ModalBuilder()
           .setCustomId('familie_modal')
-          .setTitle('Familie Auftrag')
+          .setTitle('Familien Auftrag')
           .addComponents(
             new ActionRowBuilder().addComponents(
               new TextInputBuilder()
                 .setCustomId('text')
                 .setLabel('Beschreibung')
                 .setStyle(TextInputStyle.Paragraph)
+                .setRequired(true)
             )
           );
 
@@ -147,24 +193,36 @@ client.on('interactionCreate', async interaction => {
 
     // ===== MODAL =====
     else if (interaction.isModalSubmit()) {
-      if (interaction.customId === 'familie_modal') {
 
+      const text = interaction.fields.getTextInputValue('text');
+
+      // 🎨 Familie
+      if (interaction.customId === 'familie_modal') {
         const typ = familieChoice.get(interaction.user.id);
-        const text = interaction.fields.getTextInputValue('text');
 
         const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID).catch(() => null);
-
-        if (ch) {
-          ch.send(`🎨 ${typ}: ${text}`);
-        }
+        if (ch) ch.send(`🎨 ${typ}: ${text}`);
 
         familieChoice.delete(interaction.user.id);
 
-        await interaction.reply({
-          content: "✅ Gesendet!",
-          ephemeral: true
-        });
+        return interaction.reply({ content: "✅ Gesendet!", ephemeral: true });
       }
+
+      // 📢 Vorlage / Xenon / Stance
+      const type = interaction.customId.replace("modal_", "");
+
+      let channelId = null;
+      if (type === 'xenon') channelId = XENON_CHANNEL_ID;
+      if (type === 'stance') channelId = STANCE_CHANNEL_ID;
+      if (type === 'vorlage') channelId = PANEL_CHANNEL_ID;
+
+      const ch = await client.channels.fetch(channelId).catch(() => null);
+      if (ch) ch.send(`📢 ${type.toUpperCase()}:\n${text}`);
+
+      await interaction.reply({
+        content: "✅ Auftrag gesendet!",
+        ephemeral: true
+      });
     }
 
   } catch (err) {
