@@ -8,6 +8,7 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
+  StringSelectMenuBuilder,
   PermissionsBitField,
   ChannelType,
   MessageFlags,
@@ -28,6 +29,7 @@ const LOG_CHANNEL_ID = "1496743068785709096";
 
 const XENON_CHANNEL_ID = "1439386475572756570";
 const STANCE_CHANNEL_ID = "1363997615305523411";
+const FAMILIE_CHANNEL_ID = "1442699333068783736";
 
 const SUPPORT_ROLE_ID = "1497953436514255089";
 const CATEGORY_ID = "1321858825929621584";
@@ -46,56 +48,21 @@ const client = new Client({
   ]
 });
 
-// ===== TEMP STORAGE =====
 const pending = new Map();
+const familieChoice = new Map();
 
-// ===== LOG FUNCTION =====
-async function sendLog(text) {
+// ===== LOG =====
+function log(text) {
   const ch = client.channels.cache.get(LOG_CHANNEL_ID);
-  if (!ch) return;
-  ch.send({ content: text });
+  if (ch) ch.send(text);
 }
-
-// ===== SLASH COMMAND =====
-const commands = [
-  new SlashCommandBuilder()
-    .setName('familie')
-    .setDescription('Familien Auftrag')
-    .addStringOption(o =>
-      o.setName('typ')
-        .setDescription('Typ auswählen')
-        .setRequired(true)
-        .addChoices(
-          { name: 'Primer', value: 'Primer' },
-          { name: 'Sekundär', value: 'Sekundär' },
-          { name: 'Perleffekt', value: 'Perleffekt' },
-          { name: 'Unterboden', value: 'Unterboden' },
-          { name: 'Extra', value: 'Extra' }
-        )
-    )
-    .addStringOption(o =>
-      o.setName('text')
-        .setDescription('Beschreibung')
-        .setRequired(true)
-    )
-].map(c => c.toJSON());
-
-const rest = new REST({ version: '10' }).setToken(TOKEN);
-(async () => {
-  await rest.put(
-    Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
-    { body: commands }
-  );
-})();
 
 // ===== READY =====
 client.once('clientReady', async () => {
-  console.log(`Bot online: ${client.user.tag}`);
 
-  // 📢 PANEL
   const panel = await client.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
   if (panel) {
-    await panel.send({
+    panel.send({
       embeds: [
         new EmbedBuilder()
           .setColor(0x00ff00)
@@ -103,261 +70,111 @@ client.once('clientReady', async () => {
           .setThumbnail(LOGO)
           .setDescription(
 `📢 **Vorlage**
-Erstelle ganz einfach eine Vorlage für Ankündigungen
+Erstelle ganz einfach eine Vorlage
 
 🚗 **Aufträge**
-Erstelle einen Auftrag für Xenon oder Stance`
+Erstelle Xenon oder Stance
+
+🎨 **Familie**
+Wähle eine Kategorie und erstelle Auftrag`
           )
           .setImage(BANNER)
       ],
       components: [
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('vorlage').setLabel('📢 Vorlage').setStyle(ButtonStyle.Primary)
-        ),
-        new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('vorlage').setLabel('📢 Vorlage').setStyle(ButtonStyle.Primary),
           new ButtonBuilder().setCustomId('xenon').setLabel('🚗 Xenon').setStyle(ButtonStyle.Success),
-          new ButtonBuilder().setCustomId('stance').setLabel('🏁 Stance').setStyle(ButtonStyle.Secondary)
+          new ButtonBuilder().setCustomId('stance').setLabel('🏁 Stance').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('familie').setLabel('🎨 Familie').setStyle(ButtonStyle.Secondary)
         )
       ]
     });
   }
 
-  // 🎟️ TICKET PANEL
-  const ticketPanel = await client.channels.fetch(TICKET_PANEL_ID).catch(() => null);
-  if (ticketPanel) {
-    await ticketPanel.send({
-      embeds: [
-        new EmbedBuilder()
-          .setColor(0x00ff00)
-          .setAuthor({ name: "🎫 Ticket öffnen", iconURL: LOGO })
-          .setThumbnail(LOGO)
-          .setDescription(
-`🎫 **Ticket öffnen**
-
-Hast du Probleme oder Fragen?
-Mach einfach ein Ticket auf
-
-Wir helfen dir gerne weiter!`
-          )
-          .setImage(BANNER)
-      ],
-      components: [
-        new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('open_ticket').setLabel('🎟️ Ticket öffnen').setStyle(ButtonStyle.Success)
-        )
-      ]
-    });
-  }
 });
 
-// ===== INTERACTIONS =====
+// ===== INTERACTION =====
 client.on('interactionCreate', async interaction => {
 
+  // ===== BUTTONS =====
   if (interaction.isButton()) {
 
-    // VORLAGE
-    if (interaction.customId === 'vorlage') {
-      const modal = new ModalBuilder()
-        .setCustomId('vorlage_modal')
-        .setTitle('Vorlage');
+    if (interaction.customId === 'familie') {
 
-      modal.addComponents(
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('titel').setLabel('Titel').setStyle(TextInputStyle.Short)
-        ),
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('text').setLabel('Text').setStyle(TextInputStyle.Paragraph)
-        )
-      );
+      const menu = new StringSelectMenuBuilder()
+        .setCustomId('familie_select')
+        .setPlaceholder('Kategorie auswählen')
+        .addOptions([
+          { label: 'Primer', value: 'Primer' },
+          { label: 'Sekundär', value: 'Sekundär' },
+          { label: 'Perleffekt', value: 'Perleffekt' },
+          { label: 'Unterboden', value: 'Unterboden' },
+          { label: 'Extra', value: 'Extra' }
+        ]);
 
-      return interaction.showModal(modal);
-    }
-
-    // XENON
-    if (interaction.customId === 'xenon') {
-      const modal = new ModalBuilder()
-        .setCustomId('xenon_modal')
-        .setTitle('Xenon Auftrag');
-
-      modal.addComponents(
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('kunde').setLabel('Kunde').setStyle(TextInputStyle.Short)
-        ),
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('kennzeichen').setLabel('Kennzeichen').setStyle(TextInputStyle.Short)
-        ),
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('farbe').setLabel('Farbe').setStyle(TextInputStyle.Short)
-        )
-      );
-
-      return interaction.showModal(modal);
-    }
-
-    // STANCE
-    if (interaction.customId === 'stance') {
-      const modal = new ModalBuilder()
-        .setCustomId('stance_modal')
-        .setTitle('Stance Auftrag');
-
-      modal.addComponents(
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('kunde').setLabel('Kunde').setStyle(TextInputStyle.Short)
-        ),
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('kennzeichen').setLabel('Kennzeichen').setStyle(TextInputStyle.Short)
-        )
-      );
-
-      return interaction.showModal(modal);
-    }
-
-    // 🎟️ TICKET
-    if (interaction.customId === 'open_ticket') {
-      const channel = await interaction.guild.channels.create({
-        name: `ticket-${interaction.user.username}`,
-        type: ChannelType.GuildText,
-        parent: CATEGORY_ID,
-        permissionOverwrites: [
-          { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-          { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
-          { id: SUPPORT_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
-        ]
+      return interaction.reply({
+        content: "Wähle eine Kategorie:",
+        components: [new ActionRowBuilder().addComponents(menu)],
+        flags: MessageFlags.Ephemeral
       });
-
-      await channel.send(`Support für <@${interaction.user.id}>`);
-      sendLog(`🎟️ Ticket erstellt | ${interaction.user.tag}`);
-      return interaction.reply({ content: `Ticket erstellt: ${channel}`, flags: MessageFlags.Ephemeral });
     }
   }
 
-  // ===== MODALS =====
+  // ===== DROPDOWN =====
+  if (interaction.isStringSelectMenu()) {
+
+    if (interaction.customId === 'familie_select') {
+
+      const typ = interaction.values[0];
+      familieChoice.set(interaction.user.id, typ);
+
+      const modal = new ModalBuilder()
+        .setCustomId('familie_modal')
+        .setTitle('Familien Auftrag');
+
+      modal.addComponents(
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('text')
+            .setLabel('Beschreibung')
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(true)
+        )
+      );
+
+      return interaction.showModal(modal);
+    }
+  }
+
+  // ===== MODAL =====
   if (interaction.isModalSubmit()) {
 
-    if (interaction.customId === 'vorlage_modal') {
+    if (interaction.customId === 'familie_modal') {
+
+      const typ = familieChoice.get(interaction.user.id);
+      const text = interaction.fields.getTextInputValue('text');
+
+      const embed = new EmbedBuilder()
+        .setColor(0x00ff00)
+        .setAuthor({ name: "🎨 Familien Auftrag", iconURL: LOGO })
+        .setThumbnail(LOGO)
+        .addFields(
+          { name: "Typ", value: typ },
+          { name: "Beschreibung", value: text }
+        );
+
+      const ch = interaction.client.channels.cache.get(FAMILIE_CHANNEL_ID);
+      if (ch) ch.send({ embeds: [embed] });
+
+      log(`🎨 Familie | ${interaction.user.tag} | ${typ}`);
+
       return interaction.reply({
-        embeds: [
-          new EmbedBuilder()
-            .setColor(0x00ff00)
-            .setAuthor({ name: interaction.fields.getTextInputValue('titel'), iconURL: LOGO })
-            .setThumbnail(LOGO)
-            .setDescription(interaction.fields.getTextInputValue('text'))
-            .setImage(BANNER)
-        ]
+        content: "✅ Auftrag gesendet!",
+        flags: MessageFlags.Ephemeral
       });
     }
-
-    if (interaction.customId === 'xenon_modal') {
-      pending.set(interaction.user.id, {
-        type: 'xenon',
-        images: [],
-        kunde: interaction.fields.getTextInputValue('kunde'),
-        kennzeichen: interaction.fields.getTextInputValue('kennzeichen'),
-        farbe: interaction.fields.getTextInputValue('farbe')
-      });
-
-      return interaction.reply({ content: "🚗 Sende max. 2 Bilder 📸", flags: MessageFlags.Ephemeral });
-    }
-
-    if (interaction.customId === 'stance_modal') {
-      pending.set(interaction.user.id, {
-        type: 'stance',
-        images: [],
-        kunde: interaction.fields.getTextInputValue('kunde'),
-        kennzeichen: interaction.fields.getTextInputValue('kennzeichen')
-      });
-
-      return interaction.reply({ content: "🏁 Sende max. 2 Bilder 📸", flags: MessageFlags.Ephemeral });
-    }
   }
 
-  // ===== FAMILIE =====
-  if (interaction.isChatInputCommand() && interaction.commandName === 'familie') {
-    return interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setColor(0x00ff00)
-          .setAuthor({ name: "🎨 Familien Auftrag", iconURL: LOGO })
-          .setThumbnail(LOGO)
-          .addFields(
-            { name: "Typ", value: interaction.options.getString('typ') },
-            { name: "Details", value: interaction.options.getString('text') }
-          )
-      ]
-    });
-  }
-});
-
-// ===== BILDER =====
-client.on('messageCreate', async message => {
-  if (message.author.bot) return;
-
-  const data = pending.get(message.author.id);
-  if (!data) return;
-  if (!message.attachments.size) return;
-
-  const img = message.attachments.first();
-  data.images.push(img.url);
-
-  // DELETE IMAGE
-  message.delete().catch(() => {});
-
-  if (data.images.length >= 2) {
-
-    let embed = new EmbedBuilder()
-      .setColor(0x00ff00)
-      .setThumbnail(LOGO);
-
-    if (data.type === 'xenon') {
-      embed.setAuthor({ name: "🚗 Xenon Auftrag", iconURL: LOGO })
-        .addFields(
-          { name: "Kunde", value: data.kunde },
-          { name: "Kennzeichen", value: data.kennzeichen },
-          { name: "Farbe", value: data.farbe }
-        )
-        .setImage(data.images[0]);
-
-      client.channels.cache.get(XENON_CHANNEL_ID).send({ embeds: [embed], files: [data.images[1]] });
-      sendLog(`🚗 Xenon | ${message.author.tag}`);
-    }
-
-    if (data.type === 'stance') {
-      embed.setAuthor({ name: "🏁 Stance Auftrag", iconURL: LOGO })
-        .addFields(
-          { name: "Kunde", value: data.kunde },
-          { name: "Kennzeichen", value: data.kennzeichen }
-        )
-        .setImage(data.images[0]);
-
-      client.channels.cache.get(STANCE_CHANNEL_ID).send({ embeds: [embed], files: [data.images[1]] });
-      sendLog(`🏁 Stance | ${message.author.tag}`);
-    }
-
-    pending.delete(message.author.id);
-  }
-});
-
-// ===== JOIN =====
-client.on('guildMemberAdd', member => {
-  const ch = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
-  if (ch) {
-    ch.send({
-      embeds: [
-        new EmbedBuilder()
-          .setColor(0x00ff00)
-          .setAuthor({ name: "Willkommen!", iconURL: LOGO })
-          .setThumbnail(LOGO)
-          .setDescription(`Willkommen <@${member.id}>`)
-          .setImage(BANNER)
-      ]
-    });
-  }
-  sendLog(`👋 Join: ${member.user.tag}`);
-});
-
-// ===== SERVER LOG =====
-client.on('channelCreate', ch => {
-  sendLog(`📁 Channel erstellt: ${ch.name}`);
 });
 
 client.login(TOKEN);
