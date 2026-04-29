@@ -128,105 +128,101 @@ client.on('interactionCreate', async interaction => {
   if (interaction.isButton()) {
 
     // 🎟️ TICKET
-    if (interaction.customId === 'ticket') {
+    client.on('interactionCreate', async interaction => {
+  try {
 
-      const ch = await interaction.guild.channels.create({
-        name: `ticket-${interaction.user.username}`,
-        type: ChannelType.GuildText,
-        parent: CATEGORY_ID,
-        permissionOverwrites: [
-          { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-          { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
-          { id: SUPPORT_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
-        ]
-      });
+    // ===== BUTTONS =====
+    if (interaction.isButton()) {
 
-      ch.send(`🎟️ Support für <@${interaction.user.id}>`);
-      log(`🎟️ Ticket | ${interaction.user.tag}`);
+      if (interaction.customId === 'ticket') {
 
-      return interaction.reply({
-        content: "✅ Ticket erstellt!",
-        flags: MessageFlags.Ephemeral
-      });
+        const ch = await interaction.guild.channels.create({
+          name: `ticket-${interaction.user.id}`, // besser!
+          type: ChannelType.GuildText,
+          parent: CATEGORY_ID,
+          permissionOverwrites: [
+            { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+            { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] },
+            { id: SUPPORT_ROLE_ID, allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages] }
+          ]
+        });
+
+        await interaction.reply({
+          content: "✅ Ticket erstellt!",
+          ephemeral: true
+        });
+
+        ch.send(`🎟️ Support für <@${interaction.user.id}>`);
+        log(`🎟️ Ticket | ${interaction.user.tag}`);
+      }
     }
 
-    // 🎨 FAMILIE BUTTON
-    if (interaction.customId === 'familie') {
+    // ===== DROPDOWN =====
+    else if (interaction.isStringSelectMenu()) {
+      if (interaction.customId === 'familie_select') {
 
-      const menu = new StringSelectMenuBuilder()
-        .setCustomId('familie_select')
-        .setPlaceholder('Kategorie auswählen')
-        .addOptions([
-          { label: 'Primer', value: 'Primer' },
-          { label: 'Sekundär', value: 'Sekundär' },
-          { label: 'Perleffekt', value: 'Perleffekt' },
-          { label: 'Unterboden', value: 'Unterboden' },
-          { label: 'Extra', value: 'Extra' }
-        ]);
+        const typ = interaction.values[0];
+        familieChoice.set(interaction.user.id, typ);
 
-      return interaction.reply({
-        content: "Kategorie wählen:",
-        components: [new ActionRowBuilder().addComponents(menu)],
-        flags: MessageFlags.Ephemeral
-      });
+        const modal = new ModalBuilder()
+          .setCustomId('familie_modal')
+          .setTitle('Familien Auftrag')
+          .addComponents(
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder()
+                .setCustomId('text')
+                .setLabel('Beschreibung')
+                .setStyle(TextInputStyle.Paragraph)
+                .setRequired(true)
+            )
+          );
+
+        await interaction.showModal(modal);
+      }
     }
-  }
 
-  // ===== DROPDOWN =====
-  if (interaction.isStringSelectMenu()) {
+    // ===== MODAL =====
+    else if (interaction.isModalSubmit()) {
+      if (interaction.customId === 'familie_modal') {
 
-  if (interaction.customId === 'familie_select') {
+        const typ = familieChoice.get(interaction.user.id);
+        const text = interaction.fields.getTextInputValue('text');
 
-    const typ = interaction.values[0];
-    familieChoice.set(interaction.user.id, typ);
+        const embed = new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setAuthor({ name: "🎨 Familien Auftrag", iconURL: LOGO })
+          .addFields(
+            { name: "Typ", value: typ || "Unbekannt" },
+            { name: "Beschreibung", value: text }
+          );
 
-    const modal = new ModalBuilder()
-      .setCustomId('familie_modal')
-      .setTitle('Familien Auftrag');
+        const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID).catch(() => null);
 
-    modal.addComponents(
-      new ActionRowBuilder().addComponents(
-        new TextInputBuilder()
-          .setCustomId('text')
-          .setLabel('Beschreibung')
-          .setStyle(TextInputStyle.Paragraph)
-          .setRequired(true)
-      )
-    );
+        if (!ch) {
+          return interaction.reply({ content: "❌ Kanal nicht gefunden", ephemeral: true });
+        }
 
-    return interaction.showModal(modal); // ❗ OHNE deferUpdate
-  }
-}
+        ch.send({ embeds: [embed] });
 
-  // ===== MODAL =====
-  if (interaction.isModalSubmit()) {
+        familieChoice.delete(interaction.user.id); // wichtig!
 
-    if (interaction.customId === 'familie_modal') {
+        await interaction.reply({
+          content: "✅ Auftrag gesendet!",
+          ephemeral: true
+        });
+      }
+    }
 
-      const typ = familieChoice.get(interaction.user.id);
-      const text = interaction.fields.getTextInputValue('text');
+  } catch (err) {
+    console.error("❌ ERROR:", err);
 
-      const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setAuthor({ name: "🎨 Familien Auftrag", iconURL: LOGO })
-        .setThumbnail(LOGO)
-        .addFields(
-          { name: "Typ", value: typ },
-          { name: "Beschreibung", value: text }
-        );
-
-      const ch = interaction.client.channels.cache.get(FAMILIE_CHANNEL_ID);
-      if (ch) ch.send({ embeds: [embed] });
-
-      log(`🎨 Familie | ${interaction.user.tag} | ${typ}`);
-
-      return interaction.reply({
-        content: "✅ Auftrag gesendet!",
-        flags: MessageFlags.Ephemeral
+    if (!interaction.replied) {
+      await interaction.reply({
+        content: "❌ Fehler beim Ausführen!",
+        ephemeral: true
       });
     }
   }
-
 });
 
 // ===== WELCOME =====
