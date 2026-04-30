@@ -93,6 +93,7 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isButton()) {
 
+      // ===== TICKET =====
       if (interaction.customId === 'ticket') {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
@@ -131,6 +132,7 @@ client.on('interactionCreate', async interaction => {
         setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
       }
 
+      // ===== MODALS =====
       if (interaction.customId === 'vorlage') {
         return interaction.showModal(
           new ModalBuilder()
@@ -171,10 +173,40 @@ client.on('interactionCreate', async interaction => {
             )
         );
       }
+
+      if (interaction.customId === 'familie') {
+        return interaction.showModal(
+          new ModalBuilder()
+            .setCustomId('familie')
+            .setTitle('Familie')
+            .addComponents(
+              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('primer').setLabel('Primer').setStyle(TextInputStyle.Short)),
+              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('sek').setLabel('Sekundär').setStyle(TextInputStyle.Short)),
+              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('perl').setLabel('Perleffekt').setStyle(TextInputStyle.Short)),
+              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('unter').setLabel('Unterboden').setStyle(TextInputStyle.Short)),
+              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('extra').setLabel('Extra').setStyle(TextInputStyle.Short))
+            )
+        );
+      }
     }
 
+    // ===== MODAL SUBMIT =====
     if (interaction.isModalSubmit()) {
 
+      // VORLAGE
+      if (interaction.customId === 'vorlage') {
+        const embed = new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setTitle(interaction.fields.getTextInputValue('title'))
+          .setDescription(interaction.fields.getTextInputValue('text'))
+          .setThumbnail(LOGO)
+          .setImage(BANNER);
+
+        interaction.channel.send({ embeds: [embed] });
+        return interaction.reply({ content: "✅ Gesendet!", flags: MessageFlags.Ephemeral });
+      }
+
+      // XENON / STANCE
       if (interaction.customId === 'xenon' || interaction.customId === 'stance') {
         pending.set(interaction.user.id, {
           type: interaction.customId,
@@ -184,6 +216,39 @@ client.on('interactionCreate', async interaction => {
         return interaction.reply({ content: "📸 Bitte sende dein Bild", flags: MessageFlags.Ephemeral });
       }
 
+      // ===== FAMILIE FIX =====
+      if (interaction.customId === 'familie') {
+
+        const embed = new EmbedBuilder()
+          .setColor(0x00ff00)
+          .setTitle("🎨 Familie Auftrag")
+          .setThumbnail(LOGO)
+          .setDescription(
+`🎨 **Primer**
+${interaction.fields.getTextInputValue('primer')}
+
+🎨 **Sekundär**
+${interaction.fields.getTextInputValue('sek')}
+
+✨ **Perleffekt**
+${interaction.fields.getTextInputValue('perl')}
+
+🚗 **Unterboden**
+${interaction.fields.getTextInputValue('unter')}
+
+➕ **Extra**
+${interaction.fields.getTextInputValue('extra')}`
+          )
+          .setImage(BANNER);
+
+        const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID);
+        await ch.send({ embeds: [embed] });
+
+        return interaction.reply({
+          content: "✅ Familie Auftrag gesendet!",
+          flags: MessageFlags.Ephemeral
+        });
+      }
     }
 
   } catch (err) {
