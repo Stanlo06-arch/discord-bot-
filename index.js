@@ -43,7 +43,6 @@ const pending = new Map();
 client.once('clientReady', async () => {
   console.log("✅ Bot online");
 
-  // PANEL CLEAN
   const panel = await client.channels.fetch(PANEL_CHANNEL_ID);
   const msgs = await panel.messages.fetch({ limit: 10 });
   await panel.bulkDelete(msgs, true).catch(() => {});
@@ -67,7 +66,6 @@ client.once('clientReady', async () => {
     ]
   });
 
-  // TICKET PANEL CLEAN
   const ticketPanel = await client.channels.fetch(TICKET_PANEL_ID);
   const msgs2 = await ticketPanel.messages.fetch({ limit: 10 });
   await ticketPanel.bulkDelete(msgs2, true).catch(() => {});
@@ -95,7 +93,6 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isButton()) {
 
-      // ===== TICKET =====
       if (interaction.customId === 'ticket') {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
@@ -134,7 +131,6 @@ client.on('interactionCreate', async interaction => {
         setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
       }
 
-      // ===== MODALS =====
       if (interaction.customId === 'vorlage') {
         return interaction.showModal(
           new ModalBuilder()
@@ -175,37 +171,9 @@ client.on('interactionCreate', async interaction => {
             )
         );
       }
-
-      if (interaction.customId === 'familie') {
-        return interaction.showModal(
-          new ModalBuilder()
-            .setCustomId('familie')
-            .setTitle('Familie')
-            .addComponents(
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('primer').setLabel('Primer').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('sek').setLabel('Sekundär').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('perl').setLabel('Perleffekt').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('unter').setLabel('Unterboden').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('extra').setLabel('Extra').setStyle(TextInputStyle.Short))
-            )
-        );
-      }
     }
 
-    // ===== MODAL SUBMIT =====
     if (interaction.isModalSubmit()) {
-
-      if (interaction.customId === 'vorlage') {
-        const embed = new EmbedBuilder()
-          .setColor(0x00ff00)
-          .setTitle(interaction.fields.getTextInputValue('title'))
-          .setDescription(interaction.fields.getTextInputValue('text'))
-          .setThumbnail(LOGO)
-          .setImage(BANNER);
-
-        interaction.channel.send({ embeds: [embed] });
-        return interaction.reply({ content: "✅ Gesendet!", flags: MessageFlags.Ephemeral });
-      }
 
       if (interaction.customId === 'xenon' || interaction.customId === 'stance') {
         pending.set(interaction.user.id, {
@@ -223,7 +191,7 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-// ===== IMAGE HANDLER (FINAL FIX) =====
+// ===== IMAGE HANDLER =====
 client.on('messageCreate', async msg => {
   if (!msg.attachments.size) return;
 
@@ -232,54 +200,50 @@ client.on('messageCreate', async msg => {
 
   const file = msg.attachments.first().url;
 
-  // löschen nach 3 Sekunden
   setTimeout(async () => {
     await msg.delete().catch(() => {});
   }, 3000);
 
+  const embed = new EmbedBuilder()
+    .setColor(0x00ff00)
+    .setThumbnail(LOGO)
+    .setImage("attachment://car.png");
+
   if (user.type === 'xenon') {
+    embed
+      .setTitle("🚗 Xenon Auftrag")
+      .setDescription(
+`👤 **Kundenname**
+${user.data.getTextInputValue('name')}
 
-  const embed = new EmbedBuilder()
-    .setColor(0x00ff00)
-    .setTitle("🚗 Xenon Auftrag")
-    .setThumbnail(LOGO)
-    .setDescription(
-`👤 ${user.data.getTextInputValue('name')}
+🚘 **Kennzeichen**
+${user.data.getTextInputValue('kz')}
 
-🚘 ${user.data.getTextInputValue('kz')}
+🎨 **Farbe**
+${user.data.getTextInputValue('farbe')}`
+      );
+  }
 
-🎨 ${user.data.getTextInputValue('farbe')}`
-    )
-    .setImage("attachment://car.png"); // 🔥 wichtig
+  if (user.type === 'stance') {
+    embed
+      .setTitle("🏁 Stance Auftrag")
+      .setDescription(
+`👤 **Kundenname**
+${user.data.getTextInputValue('name')}
 
-  const ch = await client.channels.fetch(XENON_CHANNEL_ID);
+🚘 **Kennzeichen**
+${user.data.getTextInputValue('kz')}`
+      );
+  }
 
-  await ch.send({
-    embeds: [embed],
-    files: [{ attachment: file, name: 'car.png' }] // 🔥 wichtig
-  });
-}
-
- if (user.type === 'stance') {
-
-  const embed = new EmbedBuilder()
-    .setColor(0x00ff00)
-    .setTitle("🏁 Stance Auftrag")
-    .setThumbnail(LOGO)
-    .setDescription(
-`👤 ${user.data.getTextInputValue('name')}
-
-🚘 ${user.data.getTextInputValue('kz')}`
-    )
-    .setImage("attachment://car.png"); // 🔥 wichtig
-
-  const ch = await client.channels.fetch(STANCE_CHANNEL_ID);
+  const ch = await client.channels.fetch(
+    user.type === 'xenon' ? XENON_CHANNEL_ID : STANCE_CHANNEL_ID
+  );
 
   await ch.send({
     embeds: [embed],
-    files: [{ attachment: file, name: 'car.png' }] // 🔥 wichtig
+    files: [{ attachment: file, name: "car.png" }]
   });
-}
 
   pending.delete(msg.author.id);
 });
