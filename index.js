@@ -18,6 +18,7 @@ const TOKEN = process.env.TOKEN;
 // ===== IDs =====
 const PANEL_CHANNEL_ID = "1498441200062169159";
 const TICKET_PANEL_ID = "1498024704726929468";
+const WELCOME_CHANNEL_ID = "1457160970811080910";
 
 const XENON_CHANNEL_ID = "1439386475572756570";
 const STANCE_CHANNEL_ID = "1363997615305523411";
@@ -34,7 +35,8 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
   ]
 });
 
@@ -96,7 +98,6 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isButton()) {
 
-      // ===== TICKET =====
       if (interaction.customId === 'ticket') {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
@@ -135,43 +136,7 @@ client.on('interactionCreate', async interaction => {
         setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
       }
 
-      // ===== SEITEN =====
-      if (interaction.customId === 'next' || interaction.customId === 'back') {
-
-        const data = vorlageData.get(interaction.user.id);
-        let page = vorlagePages.get(interaction.user.id);
-
-        if (!data) return;
-
-        if (interaction.customId === 'next') page++;
-        if (interaction.customId === 'back') page--;
-
-        if (page < 0) page = 0;
-        if (page > Math.floor(data.channels.length / 25)) {
-          page = Math.floor(data.channels.length / 25);
-        }
-
-        vorlagePages.set(interaction.user.id, page);
-
-        const start = page * 25;
-        const end = start + 25;
-
-        const menu = new ActionRowBuilder().addComponents(
-          new StringSelectMenuBuilder()
-            .setCustomId('vorlage_channel')
-            .setPlaceholder(`Seite ${page + 1}`)
-            .addOptions(data.channels.slice(start, end))
-        );
-
-        const buttons = new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('back').setLabel('⬅️').setStyle(ButtonStyle.Secondary),
-          new ButtonBuilder().setCustomId('next').setLabel('➡️').setStyle(ButtonStyle.Secondary)
-        );
-
-        return interaction.update({ components: [menu, buttons] });
-      }
-
-      // ===== MODALS =====
+      // Vorlage Modal
       if (interaction.customId === 'vorlage') {
         return interaction.showModal(
           new ModalBuilder()
@@ -179,11 +144,13 @@ client.on('interactionCreate', async interaction => {
             .setTitle('Vorlage')
             .addComponents(
               new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('title').setLabel('Titel').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('text').setLabel('Text (Ping möglich)').setStyle(TextInputStyle.Paragraph))
+              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('text').setLabel('Text').setStyle(TextInputStyle.Paragraph)),
+              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('role').setLabel('Rolle (@Name optional)').setStyle(TextInputStyle.Short).setRequired(false))
             )
         );
       }
 
+      // Xenon
       if (interaction.customId === 'xenon') {
         return interaction.showModal(
           new ModalBuilder()
@@ -197,6 +164,7 @@ client.on('interactionCreate', async interaction => {
         );
       }
 
+      // Stance
       if (interaction.customId === 'stance') {
         return interaction.showModal(
           new ModalBuilder()
@@ -209,6 +177,7 @@ client.on('interactionCreate', async interaction => {
         );
       }
 
+      // Familie
       if (interaction.customId === 'familie') {
         return interaction.showModal(
           new ModalBuilder()
@@ -237,6 +206,7 @@ client.on('interactionCreate', async interaction => {
         vorlageData.set(interaction.user.id, {
           title: interaction.fields.getTextInputValue('title'),
           text: interaction.fields.getTextInputValue('text'),
+          role: interaction.fields.getTextInputValue('role'),
           channels
         });
 
@@ -306,20 +276,27 @@ ${interaction.fields.getTextInputValue('extra')}`)
         const data = vorlageData.get(interaction.user.id);
         if (!data) return;
 
+        let roleMention = null;
+        if (data.role) {
+          const role = interaction.guild.roles.cache.find(r =>
+            r.name.toLowerCase() === data.role.replace('@', '').toLowerCase()
+          );
+          if (role) roleMention = `<@&${role.id}>`;
+        }
+
         const ch = await client.channels.fetch(interaction.values[0]);
 
         const embed = new EmbedBuilder()
           .setColor(0x00ff00)
           .setTitle(data.title)
-          .setDescription(data.text)
+          .setDescription(`${roleMention ? `👥 **Rolle**\n${roleMention}\n\n` : ''}${data.text}`)
           .setThumbnail(LOGO)
           .setImage(BANNER);
 
         await ch.send({
+          content: roleMention || null,
           embeds: [embed],
-          allowedMentions: {
-            parse: ['users', 'roles', 'everyone']
-          }
+          allowedMentions: { parse: ['roles'] }
         });
 
         vorlageData.delete(interaction.user.id);
@@ -344,7 +321,6 @@ client.on('messageCreate', async msg => {
   if (!user) return;
 
   const file = msg.attachments.first().url;
-
   setTimeout(() => msg.delete().catch(() => {}), 3000);
 
   const embed = new EmbedBuilder()
@@ -383,6 +359,32 @@ ${user.data.getTextInputValue('kz')}`);
   });
 
   pending.delete(msg.author.id);
+});
+
+// ===== WELCOME =====
+client.on('guildMemberAdd', member => {
+  const ch = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
+  if (!ch) return;
+
+  const embed = new EmbedBuilder()
+    .setColor(0x00ff00)
+    .setAuthor({ name: "Top Gear Performance", iconURL: LOGO })
+    .setThumbnail(LOGO)
+    .setDescription(
+`🚗 **Willkommen bei 𝒯𝑜𝓅 𝒢𝑒𝒶𝓇 𝒫𝑒𝓇𝒻𝑜𝓇𝓂𝒶𝓃𝒸𝑒**
+
+<@${member.id}> 👋  
+
+🔧 Schön dass du da bist!  
+Hier dreht sich alles um Performance, Style und Geschwindigkeit.  
+
+📍 **Standort:** 1015  
+
+🔥 🏁 Steig ein und erlebe echte Performance!`
+    )
+    .setImage(BANNER);
+
+  ch.send({ embeds: [embed] });
 });
 
 client.login(TOKEN);
