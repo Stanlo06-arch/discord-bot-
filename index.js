@@ -8,7 +8,8 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  ChannelType
+  ChannelType,
+  MessageFlags
 } = require('discord.js');
 
 const TOKEN = process.env.TOKEN;
@@ -36,7 +37,7 @@ const client = new Client({
   ]
 });
 
-// ===== TEMP =====
+// ===== TEMP STORAGE =====
 const pending = new Map();
 
 // ===== READY =====
@@ -89,7 +90,7 @@ client.on('interactionCreate', async interaction => {
 
       // ===== TICKET =====
       if (interaction.customId === 'ticket') {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const ch = await interaction.guild.channels.create({
           name: `ticket-${interaction.user.id}`,
@@ -119,7 +120,7 @@ client.on('interactionCreate', async interaction => {
 
       if (interaction.customId === 'close') {
         if (!interaction.member.roles.cache.has(SUPPORT_ROLE_ID)) {
-          return interaction.reply({ content: "❌ Nur Support!", ephemeral: true });
+          return interaction.reply({ content: "❌ Nur Support!", flags: MessageFlags.Ephemeral });
         }
 
         await interaction.reply("🔒 Ticket wird in 5 Sekunden geschlossen...");
@@ -196,7 +197,7 @@ client.on('interactionCreate', async interaction => {
           .setImage(BANNER);
 
         interaction.channel.send({ embeds: [embed] });
-        return interaction.reply({ content: "✅ Gesendet!", ephemeral: true });
+        return interaction.reply({ content: "✅ Gesendet!", flags: MessageFlags.Ephemeral });
       }
 
       if (interaction.customId === 'xenon' || interaction.customId === 'stance') {
@@ -205,7 +206,7 @@ client.on('interactionCreate', async interaction => {
           data: interaction.fields
         });
 
-        return interaction.reply({ content: "📸 Bitte sende dein Bild", ephemeral: true });
+        return interaction.reply({ content: "📸 Bitte sende dein Bild", flags: MessageFlags.Ephemeral });
       }
 
       if (interaction.customId === 'familie') {
@@ -225,7 +226,7 @@ Extra: ${interaction.fields.getTextInputValue('extra')}`
         const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID);
         ch.send({ embeds: [embed] });
 
-        return interaction.reply({ content: "✅ Gesendet!", ephemeral: true });
+        return interaction.reply({ content: "✅ Gesendet!", flags: MessageFlags.Ephemeral });
       }
     }
 
