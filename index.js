@@ -40,6 +40,7 @@ const client = new Client({
 
 const pending = new Map();
 const vorlageData = new Map();
+const vorlagePages = new Map();
 
 // ===== READY =====
 client.once('clientReady', async () => {
@@ -134,6 +135,42 @@ client.on('interactionCreate', async interaction => {
         setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
       }
 
+      // ⬅️➡️ SEITEN
+      if (interaction.customId === 'next' || interaction.customId === 'back') {
+
+        const data = vorlageData.get(interaction.user.id);
+        let page = vorlagePages.get(interaction.user.id);
+
+        if (!data) return;
+
+        if (interaction.customId === 'next') page++;
+        if (interaction.customId === 'back') page--;
+
+        if (page < 0) page = 0;
+        if (page > Math.floor(data.channels.length / 25)) {
+          page = Math.floor(data.channels.length / 25);
+        }
+
+        vorlagePages.set(interaction.user.id, page);
+
+        const start = page * 25;
+        const end = start + 25;
+
+        const menu = new ActionRowBuilder().addComponents(
+          new StringSelectMenuBuilder()
+            .setCustomId('vorlage_channel')
+            .setPlaceholder(`Seite ${page + 1}`)
+            .addOptions(data.channels.slice(start, end))
+        );
+
+        const buttons = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('back').setLabel('⬅️').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('next').setLabel('➡️').setStyle(ButtonStyle.Secondary)
+        );
+
+        return interaction.update({ components: [menu, buttons] });
+      }
+
       // ===== MODALS =====
       if (interaction.customId === 'vorlage') {
         return interaction.showModal(
@@ -141,12 +178,8 @@ client.on('interactionCreate', async interaction => {
             .setCustomId('vorlage')
             .setTitle('Vorlage')
             .addComponents(
-              new ActionRowBuilder().addComponents(
-                new TextInputBuilder().setCustomId('title').setLabel('Titel').setStyle(TextInputStyle.Short)
-              ),
-              new ActionRowBuilder().addComponents(
-                new TextInputBuilder().setCustomId('text').setLabel('Text').setStyle(TextInputStyle.Paragraph)
-              )
+              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('title').setLabel('Titel').setStyle(TextInputStyle.Short)),
+              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('text').setLabel('Text').setStyle(TextInputStyle.Paragraph))
             )
         );
       }
@@ -195,45 +228,46 @@ client.on('interactionCreate', async interaction => {
     // ===== MODAL SUBMIT =====
     if (interaction.isModalSubmit()) {
 
-      // 📢 Vorlage → ALLE CHANNELS
+      // Vorlage → Seiten System
       if (interaction.customId === 'vorlage') {
-
-        vorlageData.set(interaction.user.id, {
-          title: interaction.fields.getTextInputValue('title'),
-          text: interaction.fields.getTextInputValue('text')
-        });
 
         const channels = interaction.guild.channels.cache
           .filter(c => c.type === ChannelType.GuildText)
-          .map(c => ({
-            label: c.name,
-            value: c.id
-          }))
-          .slice(0, 25);
+          .map(c => ({ label: c.name, value: c.id }));
+
+        vorlageData.set(interaction.user.id, {
+          title: interaction.fields.getTextInputValue('title'),
+          text: interaction.fields.getTextInputValue('text'),
+          channels
+        });
+
+        vorlagePages.set(interaction.user.id, 0);
 
         const menu = new ActionRowBuilder().addComponents(
           new StringSelectMenuBuilder()
             .setCustomId('vorlage_channel')
-            .setPlaceholder('Wähle einen Channel')
-            .addOptions(channels)
+            .setPlaceholder('Seite 1')
+            .addOptions(channels.slice(0, 25))
+        );
+
+        const buttons = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('back').setLabel('⬅️').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('next').setLabel('➡️').setStyle(ButtonStyle.Secondary)
         );
 
         return interaction.reply({
           content: "📢 Wähle den Channel:",
-          components: [menu],
+          components: [menu, buttons],
           flags: MessageFlags.Ephemeral
         });
       }
 
-      // 🎨 Familie
       if (interaction.customId === 'familie') {
-
         const embed = new EmbedBuilder()
           .setColor(0x00ff00)
           .setTitle("🎨 Familie Auftrag")
           .setThumbnail(LOGO)
-          .setDescription(
-`🎨 **Primer**
+          .setDescription(`🎨 **Primer**
 ${interaction.fields.getTextInputValue('primer')}
 
 🎨 **Sekundär**
@@ -246,17 +280,15 @@ ${interaction.fields.getTextInputValue('perl')}
 ${interaction.fields.getTextInputValue('unter')}
 
 ➕ **Extra**
-${interaction.fields.getTextInputValue('extra')}`
-          )
+${interaction.fields.getTextInputValue('extra')}`)
           .setImage(BANNER);
 
         const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID);
-        await ch.send({ embeds: [embed] });
+        ch.send({ embeds: [embed] });
 
         return interaction.reply({ content: "✅ Gesendet!", flags: MessageFlags.Ephemeral });
       }
 
-      // 📸 Xenon/Stance
       if (interaction.customId === 'xenon' || interaction.customId === 'stance') {
         pending.set(interaction.user.id, {
           type: interaction.customId,
@@ -267,7 +299,7 @@ ${interaction.fields.getTextInputValue('extra')}`
       }
     }
 
-    // ===== SELECT MENU =====
+    // ===== SELECT =====
     if (interaction.isStringSelectMenu()) {
 
       if (interaction.customId === 'vorlage_channel') {
