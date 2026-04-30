@@ -26,8 +26,8 @@ const SUPPORT_ROLE_ID = "1497953436514255089";
 const CATEGORY_ID = "1321858825929621584";
 
 // ===== DESIGN =====
-const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png";
-const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png";
+const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png?ex=69f489d7&is=69f33857&hm=2f82f84f97f120842fc1481bfffe65e2ace7369880da13c53c54a285886e539e&";
+const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png?ex=69f4618e&is=69f3100e&hm=d0281e751728b10d2d048fc1534ee425b5381d3c9470df57a4001f2fbebaee2f&";
 
 const client = new Client({
   intents: [
