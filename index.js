@@ -37,7 +37,6 @@ const client = new Client({
   ]
 });
 
-// ===== TEMP STORAGE =====
 const pending = new Map();
 
 // ===== READY =====
@@ -215,9 +214,13 @@ client.on('interactionCreate', async interaction => {
           .setTitle("Top Gear Performance")
           .setDescription(
 `Primer: ${interaction.fields.getTextInputValue('primer')}
+
 Sekundär: ${interaction.fields.getTextInputValue('sek')}
+
 Perleffekt: ${interaction.fields.getTextInputValue('perl')}
+
 Unterboden: ${interaction.fields.getTextInputValue('unter')}
+
 Extra: ${interaction.fields.getTextInputValue('extra')}`
           )
           .setThumbnail(LOGO)
@@ -247,15 +250,22 @@ client.on('messageCreate', async msg => {
   await msg.delete().catch(() => {});
 
   if (user.type === 'xenon') {
+
     const embed = new EmbedBuilder()
       .setColor(0x00ff00)
       .setAuthor({ name: "Top Gear Performance", iconURL: LOGO })
-      .setDescription(
-`Primär: ${user.data.getTextInputValue('farbe')}
-Sekundär: Schwarz
-Pearl: Race Yellow`
-      )
       .setThumbnail(LOGO)
+      .setTitle("🚗 Xenon Auftrag")
+      .setDescription(
+`**👤 Kundenname**
+${user.data.getTextInputValue('name')}
+
+**🚘 Kennzeichen**
+${user.data.getTextInputValue('kz')}
+
+**🎨 Farbe**
+${user.data.getTextInputValue('farbe')}`
+      )
       .setImage(image);
 
     const ch = await client.channels.fetch(XENON_CHANNEL_ID);
@@ -263,14 +273,19 @@ Pearl: Race Yellow`
   }
 
   if (user.type === 'stance') {
+
     const embed = new EmbedBuilder()
       .setColor(0x00ff00)
       .setAuthor({ name: "Top Gear Performance", iconURL: LOGO })
-      .setDescription(
-`Name: ${user.data.getTextInputValue('name')}
-Kennzeichen: ${user.data.getTextInputValue('kz')}`
-      )
       .setThumbnail(LOGO)
+      .setTitle("🏁 Stance Auftrag")
+      .setDescription(
+`**👤 Kundenname**
+${user.data.getTextInputValue('name')}
+
+**🚘 Kennzeichen**
+${user.data.getTextInputValue('kz')}`
+      )
       .setImage(image);
 
     const ch = await client.channels.fetch(STANCE_CHANNEL_ID);
