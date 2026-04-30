@@ -43,8 +43,12 @@ const pending = new Map();
 client.once('clientReady', async () => {
   console.log("✅ Bot online");
 
+  // PANEL CLEAN
   const panel = await client.channels.fetch(PANEL_CHANNEL_ID);
-  panel.send({
+  const msgs = await panel.messages.fetch({ limit: 10 });
+  await panel.bulkDelete(msgs, true).catch(() => {});
+
+  await panel.send({
     embeds: [
       new EmbedBuilder()
         .setColor(0x00ff00)
@@ -63,8 +67,12 @@ client.once('clientReady', async () => {
     ]
   });
 
+  // TICKET PANEL CLEAN
   const ticketPanel = await client.channels.fetch(TICKET_PANEL_ID);
-  ticketPanel.send({
+  const msgs2 = await ticketPanel.messages.fetch({ limit: 10 });
+  await ticketPanel.bulkDelete(msgs2, true).catch(() => {});
+
+  await ticketPanel.send({
     embeds: [
       new EmbedBuilder()
         .setColor(0x00ff00)
@@ -87,6 +95,7 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isButton()) {
 
+      // ===== TICKET =====
       if (interaction.customId === 'ticket') {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
@@ -125,6 +134,7 @@ client.on('interactionCreate', async interaction => {
         setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
       }
 
+      // ===== MODALS =====
       if (interaction.customId === 'vorlage') {
         return interaction.showModal(
           new ModalBuilder()
@@ -182,6 +192,7 @@ client.on('interactionCreate', async interaction => {
       }
     }
 
+    // ===== MODAL SUBMIT =====
     if (interaction.isModalSubmit()) {
 
       if (interaction.customId === 'vorlage') {
@@ -205,19 +216,6 @@ client.on('interactionCreate', async interaction => {
         return interaction.reply({ content: "📸 Bitte sende dein Bild", flags: MessageFlags.Ephemeral });
       }
 
-      if (interaction.customId === 'familie') {
-        const embed = new EmbedBuilder()
-          .setColor(0x00ff00)
-          .setTitle("Top Gear Performance")
-          .setDescription("Familie Auftrag")
-          .setThumbnail(LOGO)
-          .setImage(BANNER);
-
-        const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID);
-        ch.send({ embeds: [embed] });
-
-        return interaction.reply({ content: "✅ Gesendet!", flags: MessageFlags.Ephemeral });
-      }
     }
 
   } catch (err) {
@@ -225,15 +223,16 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-// ===== IMAGE HANDLER =====
+// ===== IMAGE HANDLER (FINAL FIX) =====
 client.on('messageCreate', async msg => {
   if (!msg.attachments.size) return;
 
   const user = pending.get(msg.author.id);
   if (!user) return;
 
-  const image = msg.attachments.first().url;
+  const file = msg.attachments.first().url;
 
+  // löschen nach 3 Sekunden
   setTimeout(async () => {
     await msg.delete().catch(() => {});
   }, 3000);
@@ -250,11 +249,14 @@ client.on('messageCreate', async msg => {
 🚘 ${user.data.getTextInputValue('kz')}
 
 🎨 ${user.data.getTextInputValue('farbe')}`
-      )
-      .setImage(image);
+      );
 
     const ch = await client.channels.fetch(XENON_CHANNEL_ID);
-    ch.send({ embeds: [embed] });
+
+    await ch.send({
+      embeds: [embed],
+      files: [file]
+    });
   }
 
   if (user.type === 'stance') {
@@ -267,11 +269,14 @@ client.on('messageCreate', async msg => {
 `👤 ${user.data.getTextInputValue('name')}
 
 🚘 ${user.data.getTextInputValue('kz')}`
-      )
-      .setImage(image);
+      );
 
     const ch = await client.channels.fetch(STANCE_CHANNEL_ID);
-    ch.send({ embeds: [embed] });
+
+    await ch.send({
+      embeds: [embed],
+      files: [file]
+    });
   }
 
   pending.delete(msg.author.id);
