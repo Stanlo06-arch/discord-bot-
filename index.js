@@ -95,6 +95,7 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isButton()) {
 
+      // ===== TICKET =====
       if (interaction.customId === 'ticket') {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
@@ -133,6 +134,7 @@ client.on('interactionCreate', async interaction => {
         setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
       }
 
+      // ===== MODALS =====
       if (interaction.customId === 'vorlage') {
         return interaction.showModal(
           new ModalBuilder()
@@ -190,10 +192,10 @@ client.on('interactionCreate', async interaction => {
       }
     }
 
-    // ===== MODAL =====
+    // ===== MODAL SUBMIT =====
     if (interaction.isModalSubmit()) {
 
-      // Vorlage → Dropdown
+      // 📢 Vorlage → ALLE CHANNELS
       if (interaction.customId === 'vorlage') {
 
         vorlageData.set(interaction.user.id, {
@@ -201,15 +203,19 @@ client.on('interactionCreate', async interaction => {
           text: interaction.fields.getTextInputValue('text')
         });
 
+        const channels = interaction.guild.channels.cache
+          .filter(c => c.type === ChannelType.GuildText)
+          .map(c => ({
+            label: c.name,
+            value: c.id
+          }))
+          .slice(0, 25);
+
         const menu = new ActionRowBuilder().addComponents(
           new StringSelectMenuBuilder()
             .setCustomId('vorlage_channel')
-            .setPlaceholder('Wähle Channel')
-            .addOptions([
-              { label: 'Xenon', value: XENON_CHANNEL_ID },
-              { label: 'Stance', value: STANCE_CHANNEL_ID },
-              { label: 'Familie', value: FAMILIE_CHANNEL_ID }
-            ])
+            .setPlaceholder('Wähle einen Channel')
+            .addOptions(channels)
         );
 
         return interaction.reply({
@@ -219,6 +225,7 @@ client.on('interactionCreate', async interaction => {
         });
       }
 
+      // 🎨 Familie
       if (interaction.customId === 'familie') {
 
         const embed = new EmbedBuilder()
@@ -249,6 +256,7 @@ ${interaction.fields.getTextInputValue('extra')}`
         return interaction.reply({ content: "✅ Gesendet!", flags: MessageFlags.Ephemeral });
       }
 
+      // 📸 Xenon/Stance
       if (interaction.customId === 'xenon' || interaction.customId === 'stance') {
         pending.set(interaction.user.id, {
           type: interaction.customId,
@@ -259,7 +267,7 @@ ${interaction.fields.getTextInputValue('extra')}`
       }
     }
 
-    // ===== SELECT =====
+    // ===== SELECT MENU =====
     if (interaction.isStringSelectMenu()) {
 
       if (interaction.customId === 'vorlage_channel') {
