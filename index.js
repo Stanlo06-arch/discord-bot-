@@ -135,7 +135,7 @@ client.on('interactionCreate', async interaction => {
         setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
       }
 
-      // ⬅️➡️ SEITEN
+      // ===== SEITEN =====
       if (interaction.customId === 'next' || interaction.customId === 'back') {
 
         const data = vorlageData.get(interaction.user.id);
@@ -179,7 +179,7 @@ client.on('interactionCreate', async interaction => {
             .setTitle('Vorlage')
             .addComponents(
               new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('title').setLabel('Titel').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('text').setLabel('Text').setStyle(TextInputStyle.Paragraph))
+              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('text').setLabel('Text (Ping möglich)').setStyle(TextInputStyle.Paragraph))
             )
         );
       }
@@ -228,7 +228,6 @@ client.on('interactionCreate', async interaction => {
     // ===== MODAL SUBMIT =====
     if (interaction.isModalSubmit()) {
 
-      // Vorlage → Seiten System
       if (interaction.customId === 'vorlage') {
 
         const channels = interaction.guild.channels.cache
@@ -316,7 +315,12 @@ ${interaction.fields.getTextInputValue('extra')}`)
           .setThumbnail(LOGO)
           .setImage(BANNER);
 
-        await ch.send({ embeds: [embed] });
+        await ch.send({
+          embeds: [embed],
+          allowedMentions: {
+            parse: ['users', 'roles', 'everyone']
+          }
+        });
 
         vorlageData.delete(interaction.user.id);
 
