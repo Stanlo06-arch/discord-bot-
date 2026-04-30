@@ -239,45 +239,47 @@ client.on('messageCreate', async msg => {
 
   if (user.type === 'xenon') {
 
-    const embed = new EmbedBuilder()
-      .setColor(0x00ff00)
-      .setTitle("🚗 Xenon Auftrag")
-      .setThumbnail(LOGO)
-      .setDescription(
+  const embed = new EmbedBuilder()
+    .setColor(0x00ff00)
+    .setTitle("🚗 Xenon Auftrag")
+    .setThumbnail(LOGO)
+    .setDescription(
 `👤 ${user.data.getTextInputValue('name')}
 
 🚘 ${user.data.getTextInputValue('kz')}
 
 🎨 ${user.data.getTextInputValue('farbe')}`
-      );
+    )
+    .setImage("attachment://car.png"); // 🔥 wichtig
 
-    const ch = await client.channels.fetch(XENON_CHANNEL_ID);
+  const ch = await client.channels.fetch(XENON_CHANNEL_ID);
 
-    await ch.send({
-      embeds: [embed],
-      files: [file]
-    });
-  }
+  await ch.send({
+    embeds: [embed],
+    files: [{ attachment: file, name: 'car.png' }] // 🔥 wichtig
+  });
+}
 
-  if (user.type === 'stance') {
+ if (user.type === 'stance') {
 
-    const embed = new EmbedBuilder()
-      .setColor(0x00ff00)
-      .setTitle("🏁 Stance Auftrag")
-      .setThumbnail(LOGO)
-      .setDescription(
+  const embed = new EmbedBuilder()
+    .setColor(0x00ff00)
+    .setTitle("🏁 Stance Auftrag")
+    .setThumbnail(LOGO)
+    .setDescription(
 `👤 ${user.data.getTextInputValue('name')}
 
 🚘 ${user.data.getTextInputValue('kz')}`
-      );
+    )
+    .setImage("attachment://car.png"); // 🔥 wichtig
 
-    const ch = await client.channels.fetch(STANCE_CHANNEL_ID);
+  const ch = await client.channels.fetch(STANCE_CHANNEL_ID);
 
-    await ch.send({
-      embeds: [embed],
-      files: [file]
-    });
-  }
+  await ch.send({
+    embeds: [embed],
+    files: [{ attachment: file, name: 'car.png' }] // 🔥 wichtig
+  });
+}
 
   pending.delete(msg.author.id);
 });
