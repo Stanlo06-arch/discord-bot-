@@ -26,8 +26,8 @@ const SUPPORT_ROLE_ID = "1497953436514255089";
 const CATEGORY_ID = "1321858825929621584";
 
 // ===== DESIGN =====
-const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png?ex=69f489d7&is=69f33857&hm=2f82f84f97f120842fc1481bfffe65e2ace7369880da13c53c54a285886e539e&";
-const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png?ex=69f4618e&is=69f3100e&hm=d0281e751728b10d2d048fc1534ee425b5381d3c9470df57a4001f2fbebaee2f&";
+const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png";
+const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png";
 
 const client = new Client({
   intents: [
@@ -87,7 +87,6 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.isButton()) {
 
-      // ===== TICKET =====
       if (interaction.customId === 'ticket') {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
@@ -126,7 +125,6 @@ client.on('interactionCreate', async interaction => {
         setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
       }
 
-      // ===== MODALS =====
       if (interaction.customId === 'vorlage') {
         return interaction.showModal(
           new ModalBuilder()
@@ -184,7 +182,6 @@ client.on('interactionCreate', async interaction => {
       }
     }
 
-    // ===== MODAL SUBMIT =====
     if (interaction.isModalSubmit()) {
 
       if (interaction.customId === 'vorlage') {
@@ -212,17 +209,7 @@ client.on('interactionCreate', async interaction => {
         const embed = new EmbedBuilder()
           .setColor(0x00ff00)
           .setTitle("Top Gear Performance")
-          .setDescription(
-`Primer: ${interaction.fields.getTextInputValue('primer')}
-
-Sekundär: ${interaction.fields.getTextInputValue('sek')}
-
-Perleffekt: ${interaction.fields.getTextInputValue('perl')}
-
-Unterboden: ${interaction.fields.getTextInputValue('unter')}
-
-Extra: ${interaction.fields.getTextInputValue('extra')}`
-          )
+          .setDescription("Familie Auftrag")
           .setThumbnail(LOGO)
           .setImage(BANNER);
 
@@ -247,24 +234,22 @@ client.on('messageCreate', async msg => {
 
   const image = msg.attachments.first().url;
 
-  await msg.delete().catch(() => {});
+  setTimeout(async () => {
+    await msg.delete().catch(() => {});
+  }, 3000);
 
   if (user.type === 'xenon') {
 
     const embed = new EmbedBuilder()
       .setColor(0x00ff00)
-      .setAuthor({ name: "Top Gear Performance", iconURL: LOGO })
-      .setThumbnail(LOGO)
       .setTitle("🚗 Xenon Auftrag")
+      .setThumbnail(LOGO)
       .setDescription(
-`**👤 Kundenname**
-${user.data.getTextInputValue('name')}
+`👤 ${user.data.getTextInputValue('name')}
 
-**🚘 Kennzeichen**
-${user.data.getTextInputValue('kz')}
+🚘 ${user.data.getTextInputValue('kz')}
 
-**🎨 Farbe**
-${user.data.getTextInputValue('farbe')}`
+🎨 ${user.data.getTextInputValue('farbe')}`
       )
       .setImage(image);
 
@@ -276,15 +261,12 @@ ${user.data.getTextInputValue('farbe')}`
 
     const embed = new EmbedBuilder()
       .setColor(0x00ff00)
-      .setAuthor({ name: "Top Gear Performance", iconURL: LOGO })
-      .setThumbnail(LOGO)
       .setTitle("🏁 Stance Auftrag")
+      .setThumbnail(LOGO)
       .setDescription(
-`**👤 Kundenname**
-${user.data.getTextInputValue('name')}
+`👤 ${user.data.getTextInputValue('name')}
 
-**🚘 Kennzeichen**
-${user.data.getTextInputValue('kz')}`
+🚘 ${user.data.getTextInputValue('kz')}`
       )
       .setImage(image);
 
