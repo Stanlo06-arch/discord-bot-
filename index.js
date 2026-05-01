@@ -142,8 +142,8 @@ if (interaction.isButton()) {
   if (interaction.customId === 'news') {  
     return interaction.showModal(  
       new ModalBuilder()  
-        .setCustomId('vorlage')  
-        .setTitle('Vorlage')  
+        .setCustomId('News')  
+        .setTitle('News')  
         .addComponents(  
           new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('title').setLabel('Titel').setStyle(TextInputStyle.Short)),  
           new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('text').setLabel('Text').setStyle(TextInputStyle.Paragraph)),  
