@@ -64,7 +64,7 @@ new EmbedBuilder()
 ],
 components: [
   new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('vorlage').setLabel('📢 Vorlage').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('news').setLabel('📢 News').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId('xenon').setLabel('🚗 Xenon').setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId('stance').setLabel('🏁 Stance').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('familie').setLabel('🎨 Familie').setStyle(ButtonStyle.Secondary),
@@ -139,7 +139,7 @@ if (interaction.isButton()) {
   }  
 
   // Vorlage Modal  
-  if (interaction.customId === 'vorlage') {  
+  if (interaction.customId === 'news') {  
     return interaction.showModal(  
       new ModalBuilder()  
         .setCustomId('vorlage')  
@@ -260,7 +260,7 @@ if (interaction.customId === 'next' || interaction.customId === 'back') {
 // ===== MODAL SUBMIT =====  
 if (interaction.isModalSubmit()) {  
 
-  if (interaction.customId === 'vorlage') {  
+  if (interaction.customId === 'news') {  
 
     const channels = interaction.guild.channels.cache  
       .filter(c => c.type === ChannelType.GuildText)  
