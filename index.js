@@ -91,7 +91,7 @@ const alreadyExists = messages.some(msg =>
   msg.embeds[0].title?.includes("Hausordnung")
 );
 
-  if (!alreadyExists) {
+ if (!alreadyExists) {
   await regelChannel.send({
     embeds: [
       new EmbedBuilder()
@@ -151,7 +151,7 @@ Die Leitung von Top Gear Performance behält sich das Hausrecht vor.
       )
     ]
   });
-
+}
   // ===== TICKET =====
   const ticketPanel = await client.channels.fetch(TICKET_PANEL_ID);
   const msgs2 = await ticketPanel.messages.fetch({ limit: 10 });
