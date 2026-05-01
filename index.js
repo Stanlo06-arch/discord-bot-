@@ -457,14 +457,36 @@ if (interaction.isStringSelectMenu()) {
     const data = vorlageData.get(interaction.user.id);  
     if (!data) return;  
 
-    let roleMention = null;  
-    if (data.role) {  
-      const role = interaction.guild.roles.cache.find(r =>  
-        r.name.toLowerCase() === data.role.replace('@', '').toLowerCase()  
-      );  
-      if (role) roleMention = `<@&${role.id}>`;  
-    }  
+    let mentions = [];
 
+if (data.role) {
+  const parts = data.role.split(" ");
+
+  for (const part of parts) {
+    const name = part.replace('@', '').toLowerCase();
+
+    // USER finden
+    const member = interaction.guild.members.cache.find(m =>
+      m.user.username.toLowerCase() === name
+    );
+
+    if (member) {
+      mentions.push(`<@${member.id}>`);
+      continue;
+    }
+
+    // ROLLE finden
+    const role = interaction.guild.roles.cache.find(r =>
+      r.name.toLowerCase() === name
+    );
+
+    if (role) {
+      mentions.push(`<@&${role.id}>`);
+    }
+  }
+}
+
+const mentionText = mentions.join(" ");
     const ch = await client.channels.fetch(interaction.values[0]);  
 
     const embed = new EmbedBuilder()  
