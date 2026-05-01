@@ -52,7 +52,7 @@ const newsData = new Map();
 const newsPages = new Map();
 
 // ================= READY =================
-client.once('clientReady', async () => {
+client.once('ready', async () => {
   console.log("✅ Bot online");
 
   const panel = await client.channels.fetch(PANEL_CHANNEL_ID);
@@ -128,8 +128,18 @@ client.on('interactionCreate', async interaction => {
         ]
       });
 
-      ch.send(`👤 <@${interaction.user.id}>`);
+      await ch.send(`<@${interaction.user.id}>`);
       return interaction.reply({ content: "✅ Ticket erstellt!", flags: MessageFlags.Ephemeral });
+    }
+
+    // ===== CLOSE TICKET =====
+    if (interaction.customId === 'close') {
+      if (!interaction.member.roles.cache.has(SUPPORT_ROLE_ID)) {
+        return interaction.reply({ content: "❌ Nur Support!", flags: MessageFlags.Ephemeral });
+      }
+      await interaction.reply("🔒 Ticket wird geschlossen...");
+      setTimeout(() => interaction.channel.delete().catch(() => {}), 3000);
+      return;
     }
 
     // ===== NEWS =====
@@ -149,29 +159,26 @@ client.on('interactionCreate', async interaction => {
       );
     }
 
-    // ===== STATUS =====
-    if (['bezahlt','nicht_bezahlt','aufgehoben','nicht_aufgehoben'].includes(interaction.customId)) {
-
-      if (!interaction.member.roles.cache.has(SUPPORT_ROLE_ID)) {
-        return interaction.reply({ content: "❌ Nur Support!", flags: MessageFlags.Ephemeral });
-      }
-
-      const embed = EmbedBuilder.from(interaction.message.embeds[0]);
-
-      if (interaction.customId === 'bezahlt') embed.data.fields[0].value = "🟢 Bezahlt";
-      if (interaction.customId === 'nicht_bezahlt') embed.data.fields[0].value = "🔴 Nicht bezahlt";
-      if (interaction.customId === 'aufgehoben') embed.data.fields[0].value = "🟢 Aufgehoben";
-      if (interaction.customId === 'nicht_aufgehoben') embed.data.fields[0].value = "🔴 Nicht aufgehoben";
-
-      return interaction.update({ embeds: [embed] });
-    }
-
     // ===== SANKTION =====
     if (interaction.customId === 'sanktion') {
       return interaction.showModal(
         new ModalBuilder()
           .setCustomId('sanktion_modal')
           .setTitle('Sanktion')
+          .addComponents(
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder().setCustomId('grund').setLabel('Grund').setStyle(TextInputStyle.Paragraph)
+            )
+          )
+      );
+    }
+
+    // ===== HAUSVERBOT =====
+    if (interaction.customId === 'hausverbot') {
+      return interaction.showModal(
+        new ModalBuilder()
+          .setCustomId('hausverbot_modal')
+          .setTitle('Hausverbot')
           .addComponents(
             new ActionRowBuilder().addComponents(
               new TextInputBuilder().setCustomId('grund').setLabel('Grund').setStyle(TextInputStyle.Paragraph)
@@ -193,32 +200,95 @@ client.on('interactionCreate', async interaction => {
           )
       );
     }
+
+    // ===== STATUS =====
+    if (['bezahlt','nicht_bezahlt','aufgehoben','nicht_aufgehoben'].includes(interaction.customId)) {
+      const embed = EmbedBuilder.from(interaction.message.embeds[0]);
+
+      if (interaction.customId === 'bezahlt') embed.data.fields[0].value = "🟢 Bezahlt";
+      if (interaction.customId === 'nicht_bezahlt') embed.data.fields[0].value = "🔴 Nicht bezahlt";
+      if (interaction.customId === 'aufgehoben') embed.data.fields[0].value = "🟢 Aufgehoben";
+      if (interaction.customId === 'nicht_aufgehoben') embed.data.fields[0].value = "🔴 Nicht aufgehoben";
+
+      return interaction.update({ embeds: [embed] });
+    }
   }
 
   // ===== MODALS =====
   if (interaction.isModalSubmit()) {
 
+    // ===== SANKTION SEND =====
     if (interaction.customId === 'sanktion_modal') {
       const ch = await client.channels.fetch(SANKTION_CHANNEL_ID);
 
       const embed = new EmbedBuilder()
         .setColor(0xff0000)
         .setTitle("⚖️ Sanktion")
-        .setDescription(`👤 <@${interaction.user.id}
+        .setDescription(`👤 <@${interaction.user.id}>
 📄 ${interaction.fields.getTextInputValue('grund')}`)
-        .addFields({ name: "💰 Status", value: "🔴 Nicht bezahlt" });
+        .addFields({ name: "💰 Status", value: "🔴 Nicht bezahlt" })
+        .setThumbnail(LOGO)
+        .setImage(BANNER);
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('bezahlt').setLabel('Bezahlt').setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId('nicht_bezahlt').setLabel('Nicht bezahlt').setStyle(ButtonStyle.Danger)
       );
 
-      ch.send({ embeds: [embed], components: [row] });
+      await ch.send({ embeds: [embed], components: [row] });
       return interaction.reply({ content: "✅ Sanktion erstellt", flags: MessageFlags.Ephemeral });
+    }
+
+    // ===== HAUSVERBOT SEND =====
+    if (interaction.customId === 'hausverbot_modal') {
+      const ch = await client.channels.fetch(HAUSVERBOT_CHANNEL_ID);
+
+      const embed = new EmbedBuilder()
+        .setColor(0xff0000)
+        .setTitle("🚫 Hausverbot")
+        .setDescription(`👤 <@${interaction.user.id}>
+📄 ${interaction.fields.getTextInputValue('grund')}`)
+        .addFields({ name: "📄 Status", value: "🔴 Nicht aufgehoben" })
+        .setThumbnail(LOGO)
+        .setImage(BANNER);
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('aufgehoben').setLabel('Aufgehoben').setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId('nicht_aufgehoben').setLabel('Nicht aufgehoben').setStyle(ButtonStyle.Danger)
+      );
+
+      await ch.send({ embeds: [embed], components: [row] });
+      return interaction.reply({ content: "✅ Hausverbot erstellt", flags: MessageFlags.Ephemeral });
+    }
+
+    // ===== URLAUB SEND =====
+    if (interaction.customId === 'urlaub_modal') {
+      const ch = await client.channels.fetch(URLAUB_CHANNEL_ID);
+
+      await ch.send({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0x00ff00)
+            .setTitle("🛫 Urlaub")
+            .setDescription(`👤 <@${interaction.user.id}>
+📅 ${interaction.fields.getTextInputValue('datum')}`)
+            .setThumbnail(LOGO)
+            .setImage(BANNER)
+        ]
+      });
+
+      return interaction.reply({ content: "✅ Urlaub gesendet", flags: MessageFlags.Ephemeral });
     }
   }
 
 });
 
-// ===== LOGIN =====
+// ===== WELCOME =====
+client.on('guildMemberAdd', member => {
+  const ch = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
+  if (!ch) return;
+
+  ch.send(`👋 Willkommen <@${member.id}>`);
+});
+
 client.login(TOKEN);
