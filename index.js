@@ -471,7 +471,7 @@ const embed = new EmbedBuilder()
 
 if (user.type === 'xenon') {
 embed.setTitle("🚗 Xenon Auftrag")
-.setDescription(`👥 **Erstellt von**
+.setDescription(`👥 Erstellt von
 <@${msg.author.id}>
 
 👤 Kundenname
