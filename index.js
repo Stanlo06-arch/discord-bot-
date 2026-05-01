@@ -28,6 +28,9 @@ const URLAUB_CHANNEL_ID = "1457161825530548416";
 const SUPPORT_ROLE_ID = "1497953436514255089";
 const CATEGORY_ID = "1321858825929621584";
 
+const REGEL_CHANNEL_ID = "DEIN_REGEL_CHANNEL";
+const KUNDEN_ROLE_ID = "DEINE_KUNDEN_ROLLE";
+
 // ===== DESIGN =====
 const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png";
 const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png";
@@ -94,6 +97,27 @@ new ButtonBuilder().setCustomId('ticket').setLabel('🎟️ Ticket erstellen').s
 });
 });
 
+const regelChannel = await client.channels.fetch(REGEL_CHANNEL_ID);
+
+await regelChannel.send({
+  embeds: [
+    new EmbedBuilder()
+      .setColor(0x00ff00)
+      .setTitle("📜 Server Regeln")
+      .setDescription("Bitte bestätige die Regeln um Zugriff zu erhalten.")
+      .setThumbnail(LOGO)
+      .setImage(BANNER)
+  ],
+  components: [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('verify')
+        .setLabel('✅ Regeln akzeptieren')
+        .setStyle(ButtonStyle.Success)
+    )
+  ]
+});
+
 // ===== INTERACTIONS =====
 client.on('interactionCreate', async interaction => {
 try {
@@ -137,6 +161,25 @@ if (interaction.isButton()) {
     await interaction.reply("🔒 Ticket wird geschlossen...");  
     setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);  
   }  
+
+  if (interaction.customId === 'verify') {
+
+  const role = interaction.guild.roles.cache.get(KUNDEN_ROLE_ID);
+
+  if (!role) {
+    return interaction.reply({
+      content: "❌ Rolle nicht gefunden!",
+      flags: MessageFlags.Ephemeral
+    });
+  }
+
+  await interaction.member.roles.add(role);
+
+  return interaction.reply({
+    content: "✅ Du hast Zugriff erhalten!",
+    flags: MessageFlags.Ephemeral
+  });
+}
 
   // Vorlage Modal  
   if (interaction.customId === 'news') {  
