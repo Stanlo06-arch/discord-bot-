@@ -87,7 +87,47 @@ client.once('clientReady', async () => {
         .setColor(0x00ff00)
         .setAuthor({ name: "Top Gear Performance", iconURL: LOGO })
         .setTitle("📋 Hausordnung – Top Gear Performance")
-        .setDescription(`DEIN GANZER REGEL TEXT`)
+        .setDescription(`# 📋 Hausordnung – Top Gear Performance
+
+## §1 Allgemeines Verhalten 🤝
+
+Ein respektvoller Umgang gegenüber Mitarbeitern, Kunden und der Geschäftsleitung ist verpflichtend.
+Beleidigungen, Provokationen, Diskriminierung sowie toxisches Verhalten sind untersagt 🚫
+Den Anweisungen des Personals ist jederzeit Folge zu leisten.
+
+## §2 Sicherheit & Ordnung 🚨
+
+Das Mitführen von Waffen ist im Gebäude sowie auf dem gesamten Gelände untersagt 🔫❌
+Das Tragen von Gesichtsbedeckungen ist nur aus gesundheitlichen oder gesetzlich vorgeschriebenen Gründen gestattet 😷
+Unbefugtes Betreten von Mitarbeiter-, Lager- oder Bürobereichen ist verboten 🚷
+Fluchtwege und Einfahrten sind jederzeit freizuhalten.
+
+## §3 Fahrzeuge & Werkstattbereich 🏎️
+
+Fahrzeuge dürfen ausschließlich nach Aufforderung durch das Personal in die Werkstatt bewegt werden.
+Absichtliches Rammen, Burnouts sowie unnötiges Beschleunigen sind untersagt 🔥🚫
+
+## §4 Dienstleistungen & Bezahlung 💸
+
+Die Bezahlung erfolgt unmittelbar nach Abschluss der Arbeiten.
+Preisabsprachen erfolgen vor Beginn der Arbeiten. Nachträgliche Verhandlungen sind ausgeschlossen.
+
+## §5 Verhalten bei Konflikten ⚠️
+
+Gewalt, Bedrohungen oder der Einsatz von Waffen sind strikt untersagt ❌
+Konflikte sind außerhalb des Geländes zu klären.
+
+## §6 Sanktionen 📌
+
+Bei Verstößen gegen die Hausordnung können folgende Maßnahmen ergriffen werden:
+
+* Verwarnung ⚠️
+* Hausverbot (temporär oder dauerhaft) 🚫
+
+Die Maßnahmen erfolgen nach Ermessen der Geschäftsleitung.
+
+Die Leitung von Top Gear Performance behält sich das Hausrecht vor.
+`)
         .setThumbnail(LOGO)
         .setImage(BANNER)
     ],
