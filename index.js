@@ -81,6 +81,17 @@ client.once('clientReady', async () => {
   // ===== REGELN =====
   const regelChannel = await client.channels.fetch(REGEL_CHANNEL_ID);
 
+  // letzte Nachrichten holen
+const messages = await regelChannel.messages.fetch({ limit: 10 });
+
+  // prüfen ob schon eine Regel Nachricht existiert
+const alreadyExists = messages.some(msg =>
+  msg.author.id === client.user.id &&
+  msg.embeds.length &&
+  msg.embeds[0].title?.includes("Hausordnung")
+);
+
+  if (!alreadyExists) {
   await regelChannel.send({
     embeds: [
       new EmbedBuilder()
