@@ -66,7 +66,8 @@ new ActionRowBuilder().addComponents(
 new ButtonBuilder().setCustomId('vorlage').setLabel('📢 Vorlage').setStyle(ButtonStyle.Primary),
 new ButtonBuilder().setCustomId('xenon').setLabel('🚗 Xenon').setStyle(ButtonStyle.Success),
 new ButtonBuilder().setCustomId('stance').setLabel('🏁 Stance').setStyle(ButtonStyle.Secondary),
-new ButtonBuilder().setCustomId('familie').setLabel('🎨 Familie').setStyle(ButtonStyle.Secondary)
+new ButtonBuilder().new ButtonBuilder().setCustomId('familie').setLabel('🎨 Familie').setStyle(ButtonStyle.Secondary),
+new ButtonBuilder().setCustomId('urlaub').setLabel('🛫 Urlaub').setStyle(ButtonStyle.Success)
 )
 ]
 });
@@ -194,6 +195,29 @@ if (interaction.isButton()) {
   }  
 }  
 
+  // ===== URLAUB =====
+if (interaction.customId === 'urlaub') {
+  return interaction.showModal(
+    new ModalBuilder()
+      .setCustomId('urlaub_modal')
+      .setTitle('Urlaub')
+      .addComponents(
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('datum')
+            .setLabel('Zeitraum')
+            .setStyle(TextInputStyle.Short)
+        ),
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('grund')
+            .setLabel('Grund')
+            .setStyle(TextInputStyle.Paragraph)
+        )
+      )
+  );
+}
+
 // ===== MODAL SUBMIT =====  
 if (interaction.isModalSubmit()) {  
 
@@ -269,6 +293,34 @@ const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID);
   }  
 }  
 
+  // ===== URLAUB SEND =====
+if (interaction.customId === 'urlaub_modal') {
+
+  const embed = new EmbedBuilder()
+    .setColor(0x00ff00)
+    .setTitle("🛫 Urlaub")
+    .setThumbnail(LOGO)
+    .setDescription(
+`👤 <@${interaction.user.id}>
+
+📅 **Zeitraum**
+${interaction.fields.getTextInputValue('datum')}
+
+📄 **Grund**
+${interaction.fields.getTextInputValue('grund')}`
+    )
+    .setImage(BANNER);
+
+  const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID);
+
+  await ch.send({ embeds: [embed] });
+
+  return interaction.reply({
+    content: "✅ Urlaub gesendet!",
+    flags: MessageFlags.Ephemeral
+  });
+}
+  
 // ===== SELECT =====  
 if (interaction.isStringSelectMenu()) {  
 
