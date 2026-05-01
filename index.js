@@ -470,8 +470,8 @@ const embed = new EmbedBuilder()
 .setImage("attachment://car.png");
 
 if (user.type === 'xenon') {
-embed.setTitle("🚗 Xenon Auftrag")
-.setDescription(`👥 Erstellt von
+  embed.setTitle("🚗 Xenon Auftrag")
+  .setDescription(`👥 Erstellt von
 <@${msg.author.id}>
 
 👤 Kundenname
@@ -482,10 +482,11 @@ ${user.data.getTextInputValue('kz')}
 
 🎨 Farbe
 ${user.data.getTextInputValue('farbe')}`);
+}
 
 if (user.type === 'stance') {
-embed.setTitle("🏁 Stance Auftrag")
-.setDescription(`👥 **Erstellt von**
+  embed.setTitle("🏁 Stance Auftrag")
+  .setDescription(`👥 Erstellt von
 <@${msg.author.id}>
 
 👤 Kundenname
@@ -493,7 +494,7 @@ ${user.data.getTextInputValue('name')}
 
 🚘 Kennzeichen
 ${user.data.getTextInputValue('kz')}`);
-
+}
 const ch = await client.channels.fetch(
 user.type === 'xenon' ? XENON_CHANNEL_ID : STANCE_CHANNEL_ID
 );
