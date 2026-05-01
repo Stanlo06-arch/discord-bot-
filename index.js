@@ -312,7 +312,7 @@ ${interaction.fields.getTextInputValue('grund')}`
     )
     .setImage(BANNER);
 
-  const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID);
+  const ch = await client.channels.fetch(URLAUB_CHANNEL_ID);
 
   await ch.send({ embeds: [embed] });
 
