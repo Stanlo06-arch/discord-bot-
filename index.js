@@ -1,3 +1,4 @@
+// ================= IMPORTS =================
 const {
   Client,
   GatewayIntentBits,
@@ -15,7 +16,7 @@ const {
 
 const TOKEN = process.env.TOKEN;
 
-// ===== IDs =====
+// ================= IDS =================
 const PANEL_CHANNEL_ID = "1498441200062169159";
 const TICKET_PANEL_ID = "1498024704726929468";
 const WELCOME_CHANNEL_ID = "1457160970811080910";
@@ -24,13 +25,18 @@ const XENON_CHANNEL_ID = "1439386475572756570";
 const STANCE_CHANNEL_ID = "1363997615305523411";
 const FAMILIE_CHANNEL_ID = "1442699333068783736";
 
+const SANKTION_CHANNEL_ID = "1457161680776597746";
+const HAUSVERBOT_CHANNEL_ID = "1457161848209150104";
+const URLAUB_CHANNEL_ID = "1457161825530548416";
+
 const SUPPORT_ROLE_ID = "1497953436514255089";
 const CATEGORY_ID = "1321858825929621584";
 
-// ===== DESIGN =====
+// ================= DESIGN =================
 const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png";
 const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png";
 
+// ================= CLIENT =================
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -40,11 +46,12 @@ const client = new Client({
   ]
 });
 
+// ================= STORAGE =================
 const pending = new Map();
-const vorlageData = new Map();
-const vorlagePages = new Map();
+const newsData = new Map();
+const newsPages = new Map();
 
-// ===== READY =====
+// ================= READY =================
 client.once('clientReady', async () => {
   console.log("✅ Bot online");
 
@@ -58,28 +65,38 @@ client.once('clientReady', async () => {
         .setColor(0x00ff00)
         .setAuthor({ name: "Top Gear Performance", iconURL: LOGO })
         .setThumbnail(LOGO)
-        .setDescription("Wähle eine Aktion")
+        .setDescription(`🚗 **Top Gear Performance – Mitarbeiter Panel**
+
+🔧 **Wir liefern nur die beste Leistung für unsere Kunden**
+
+Erstelle Aufträge schnell, präzise und auf höchstem Niveau  
+
+Wähle unten die passende Aktion 👇  
+
+🏁 **Qualität. Präzision. Performance.**`)
         .setImage(BANNER)
     ],
     components: [
       new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('vorlage').setLabel('📢 Vorlage').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('news').setLabel('📰 News').setStyle(ButtonStyle.Primary),
         new ButtonBuilder().setCustomId('xenon').setLabel('🚗 Xenon').setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId('stance').setLabel('🏁 Stance').setStyle(ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId('familie').setLabel('🎨 Familie').setStyle(ButtonStyle.Secondary)
+      ),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('sanktion').setLabel('⚖️ Sanktion').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId('hausverbot').setLabel('🚫 Hausverbot').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId('urlaub').setLabel('🛫 Urlaub').setStyle(ButtonStyle.Success)
       )
     ]
   });
 
   const ticketPanel = await client.channels.fetch(TICKET_PANEL_ID);
-  const msgs2 = await ticketPanel.messages.fetch({ limit: 10 });
-  await ticketPanel.bulkDelete(msgs2, true).catch(() => {});
-
   await ticketPanel.send({
     embeds: [
       new EmbedBuilder()
         .setColor(0x00ff00)
-        .setTitle("Ticket System")
+        .setTitle("🎟️ Ticket System")
         .setDescription("Wenn du Hilfe brauchst, sind wir für dich da")
         .setThumbnail(LOGO)
         .setImage(BANNER)
@@ -92,299 +109,116 @@ client.once('clientReady', async () => {
   });
 });
 
-// ===== INTERACTIONS =====
+// ================= INTERACTIONS =================
 client.on('interactionCreate', async interaction => {
-  try {
 
-    if (interaction.isButton()) {
+  // ===== BUTTONS =====
+  if (interaction.isButton()) {
 
-      if (interaction.customId === 'ticket') {
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    // ===== TICKET =====
+    if (interaction.customId === 'ticket') {
+      const ch = await interaction.guild.channels.create({
+        name: `ticket-${interaction.user.id}`,
+        parent: CATEGORY_ID,
+        type: ChannelType.GuildText,
+        permissionOverwrites: [
+          { id: interaction.guild.id, deny: ['ViewChannel'] },
+          { id: interaction.user.id, allow: ['ViewChannel', 'SendMessages'] },
+          { id: SUPPORT_ROLE_ID, allow: ['ViewChannel', 'SendMessages'] }
+        ]
+      });
 
-        const ch = await interaction.guild.channels.create({
-          name: `ticket-${interaction.user.id}`,
-          type: ChannelType.GuildText,
-          parent: CATEGORY_ID,
-          permissionOverwrites: [
-            { id: interaction.guild.id, deny: ['ViewChannel'] },
-            { id: interaction.user.id, allow: ['ViewChannel', 'SendMessages'] },
-            { id: SUPPORT_ROLE_ID, allow: ['ViewChannel', 'SendMessages'] }
-          ]
-        });
-
-        const embed = new EmbedBuilder()
-          .setColor(0x00ff00)
-          .setTitle("Ticket System")
-          .setDescription(`Erstellt von: <@${interaction.user.id}>`)
-          .setThumbnail(LOGO)
-          .setImage(BANNER);
-
-        const row = new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('close').setLabel('🔒 Schließen').setStyle(ButtonStyle.Danger)
-        );
-
-        ch.send({ embeds: [embed], components: [row] });
-        interaction.editReply("✅ Ticket erstellt!");
-      }
-
-      if (interaction.customId === 'close') {
-        if (!interaction.member.roles.cache.has(SUPPORT_ROLE_ID)) {
-          return interaction.reply({ content: "❌ Nur Support!", flags: MessageFlags.Ephemeral });
-        }
-
-        await interaction.reply("🔒 Ticket wird geschlossen...");
-        setTimeout(() => interaction.channel.delete().catch(() => {}), 5000);
-      }
-
-      // Vorlage Modal
-      if (interaction.customId === 'vorlage') {
-        return interaction.showModal(
-          new ModalBuilder()
-            .setCustomId('vorlage')
-            .setTitle('Vorlage')
-            .addComponents(
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('title').setLabel('Titel').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('text').setLabel('Text').setStyle(TextInputStyle.Paragraph)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('role').setLabel('Rolle (@Name optional)').setStyle(TextInputStyle.Short).setRequired(false))
-            )
-        );
-      }
-
-      // Xenon
-      if (interaction.customId === 'xenon') {
-        return interaction.showModal(
-          new ModalBuilder()
-            .setCustomId('xenon')
-            .setTitle('Xenon')
-            .addComponents(
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('name').setLabel('Name').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('kz').setLabel('Kennzeichen').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('farbe').setLabel('Farbe').setStyle(TextInputStyle.Short))
-            )
-        );
-      }
-
-      // Stance
-      if (interaction.customId === 'stance') {
-        return interaction.showModal(
-          new ModalBuilder()
-            .setCustomId('stance')
-            .setTitle('Stance')
-            .addComponents(
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('name').setLabel('Name').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('kz').setLabel('Kennzeichen').setStyle(TextInputStyle.Short))
-            )
-        );
-      }
-
-      // Familie
-      if (interaction.customId === 'familie') {
-        return interaction.showModal(
-          new ModalBuilder()
-            .setCustomId('familie')
-            .setTitle('Familie')
-            .addComponents(
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('primer').setLabel('Primer').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('sek').setLabel('Sekundär').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('perl').setLabel('Perleffekt').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('unter').setLabel('Unterboden').setStyle(TextInputStyle.Short)),
-              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('extra').setLabel('Extra').setStyle(TextInputStyle.Short))
-            )
-        );
-      }
+      ch.send(`👤 <@${interaction.user.id}>`);
+      return interaction.reply({ content: "✅ Ticket erstellt!", flags: MessageFlags.Ephemeral });
     }
 
-    // ===== MODAL SUBMIT =====
-    if (interaction.isModalSubmit()) {
-
-      if (interaction.customId === 'vorlage') {
-
-        const channels = interaction.guild.channels.cache
-          .filter(c => c.type === ChannelType.GuildText)
-          .map(c => ({ label: c.name, value: c.id }));
-
-        vorlageData.set(interaction.user.id, {
-          title: interaction.fields.getTextInputValue('title'),
-          text: interaction.fields.getTextInputValue('text'),
-          role: interaction.fields.getTextInputValue('role'),
-          channels
-        });
-
-        vorlagePages.set(interaction.user.id, 0);
-
-        const menu = new ActionRowBuilder().addComponents(
-          new StringSelectMenuBuilder()
-            .setCustomId('vorlage_channel')
-            .setPlaceholder('Seite 1')
-            .addOptions(channels.slice(0, 25))
-        );
-
-        const buttons = new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('back').setLabel('⬅️').setStyle(ButtonStyle.Secondary),
-          new ButtonBuilder().setCustomId('next').setLabel('➡️').setStyle(ButtonStyle.Secondary)
-        );
-
-        return interaction.reply({
-          content: "📢 Wähle den Channel:",
-          components: [menu, buttons],
-          flags: MessageFlags.Ephemeral
-        });
-      }
-
-      if (interaction.customId === 'familie') {
-        const embed = new EmbedBuilder()
-          .setColor(0x00ff00)
-          .setTitle("🎨 Familie Auftrag")
-          .setThumbnail(LOGO)
-          .setDescription(`🎨 **Primer**
-${interaction.fields.getTextInputValue('primer')}
-
-🎨 **Sekundär**
-${interaction.fields.getTextInputValue('sek')}
-
-✨ **Perleffekt**
-${interaction.fields.getTextInputValue('perl')}
-
-🚗 **Unterboden**
-${interaction.fields.getTextInputValue('unter')}
-
-➕ **Extra**
-${interaction.fields.getTextInputValue('extra')}`)
-          .setImage(BANNER);
-
-        const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID);
-        ch.send({ embeds: [embed] });
-
-        return interaction.reply({ content: "✅ Gesendet!", flags: MessageFlags.Ephemeral });
-      }
-
-      if (interaction.customId === 'xenon' || interaction.customId === 'stance') {
-        pending.set(interaction.user.id, {
-          type: interaction.customId,
-          data: interaction.fields
-        });
-
-        return interaction.reply({ content: "📸 Bitte sende dein Bild", flags: MessageFlags.Ephemeral });
-      }
+    // ===== NEWS =====
+    if (interaction.customId === 'news') {
+      return interaction.showModal(
+        new ModalBuilder()
+          .setCustomId('news_modal')
+          .setTitle('News')
+          .addComponents(
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder().setCustomId('title').setLabel('Titel').setStyle(TextInputStyle.Short)
+            ),
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder().setCustomId('text').setLabel('Text').setStyle(TextInputStyle.Paragraph)
+            )
+          )
+      );
     }
 
-    // ===== SELECT =====
-    if (interaction.isStringSelectMenu()) {
+    // ===== STATUS =====
+    if (['bezahlt','nicht_bezahlt','aufgehoben','nicht_aufgehoben'].includes(interaction.customId)) {
 
-      if (interaction.customId === 'vorlage_channel') {
-
-        const data = vorlageData.get(interaction.user.id);
-        if (!data) return;
-
-        let roleMention = null;
-        if (data.role) {
-          const role = interaction.guild.roles.cache.find(r =>
-            r.name.toLowerCase() === data.role.replace('@', '').toLowerCase()
-          );
-          if (role) roleMention = `<@&${role.id}>`;
-        }
-
-        const ch = await client.channels.fetch(interaction.values[0]);
-
-        const embed = new EmbedBuilder()
-          .setColor(0x00ff00)
-          .setTitle(data.title)
-          .setDescription(`${roleMention ? `👥 **Rolle**\n${roleMention}\n\n` : ''}${data.text}`)
-          .setThumbnail(LOGO)
-          .setImage(BANNER);
-
-        await ch.send({
-          content: roleMention || null,
-          embeds: [embed],
-          allowedMentions: { parse: ['roles'] }
-        });
-
-        vorlageData.delete(interaction.user.id);
-
-        return interaction.update({
-          content: "✅ Vorlage gesendet!",
-          components: []
-        });
+      if (!interaction.member.roles.cache.has(SUPPORT_ROLE_ID)) {
+        return interaction.reply({ content: "❌ Nur Support!", flags: MessageFlags.Ephemeral });
       }
+
+      const embed = EmbedBuilder.from(interaction.message.embeds[0]);
+
+      if (interaction.customId === 'bezahlt') embed.data.fields[0].value = "🟢 Bezahlt";
+      if (interaction.customId === 'nicht_bezahlt') embed.data.fields[0].value = "🔴 Nicht bezahlt";
+      if (interaction.customId === 'aufgehoben') embed.data.fields[0].value = "🟢 Aufgehoben";
+      if (interaction.customId === 'nicht_aufgehoben') embed.data.fields[0].value = "🔴 Nicht aufgehoben";
+
+      return interaction.update({ embeds: [embed] });
     }
 
-  } catch (err) {
-    console.error(err);
-  }
-});
+    // ===== SANKTION =====
+    if (interaction.customId === 'sanktion') {
+      return interaction.showModal(
+        new ModalBuilder()
+          .setCustomId('sanktion_modal')
+          .setTitle('Sanktion')
+          .addComponents(
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder().setCustomId('grund').setLabel('Grund').setStyle(TextInputStyle.Paragraph)
+            )
+          )
+      );
+    }
 
-// ===== IMAGE HANDLER =====
-client.on('messageCreate', async msg => {
-  if (!msg.attachments.size) return;
-
-  const user = pending.get(msg.author.id);
-  if (!user) return;
-
-  const file = msg.attachments.first().url;
-  setTimeout(() => msg.delete().catch(() => {}), 3000);
-
-  const embed = new EmbedBuilder()
-    .setColor(0x00ff00)
-    .setThumbnail(LOGO)
-    .setImage("attachment://car.png");
-
-  if (user.type === 'xenon') {
-    embed.setTitle("🚗 Xenon Auftrag")
-      .setDescription(`👤 **Kundenname**
-${user.data.getTextInputValue('name')}
-
-🚘 **Kennzeichen**
-${user.data.getTextInputValue('kz')}
-
-🎨 **Farbe**
-${user.data.getTextInputValue('farbe')}`);
+    // ===== URLAUB =====
+    if (interaction.customId === 'urlaub') {
+      return interaction.showModal(
+        new ModalBuilder()
+          .setCustomId('urlaub_modal')
+          .setTitle('Urlaub')
+          .addComponents(
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder().setCustomId('datum').setLabel('Datum').setStyle(TextInputStyle.Short)
+            )
+          )
+      );
+    }
   }
 
-  if (user.type === 'stance') {
-    embed.setTitle("🏁 Stance Auftrag")
-      .setDescription(`👤 **Kundenname**
-${user.data.getTextInputValue('name')}
+  // ===== MODALS =====
+  if (interaction.isModalSubmit()) {
 
-🚘 **Kennzeichen**
-${user.data.getTextInputValue('kz')}`);
+    if (interaction.customId === 'sanktion_modal') {
+      const ch = await client.channels.fetch(SANKTION_CHANNEL_ID);
+
+      const embed = new EmbedBuilder()
+        .setColor(0xff0000)
+        .setTitle("⚖️ Sanktion")
+        .setDescription(`👤 <@${interaction.user.id}
+📄 ${interaction.fields.getTextInputValue('grund')}`)
+        .addFields({ name: "💰 Status", value: "🔴 Nicht bezahlt" });
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('bezahlt').setLabel('Bezahlt').setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId('nicht_bezahlt').setLabel('Nicht bezahlt').setStyle(ButtonStyle.Danger)
+      );
+
+      ch.send({ embeds: [embed], components: [row] });
+      return interaction.reply({ content: "✅ Sanktion erstellt", flags: MessageFlags.Ephemeral });
+    }
   }
 
-  const ch = await client.channels.fetch(
-    user.type === 'xenon' ? XENON_CHANNEL_ID : STANCE_CHANNEL_ID
-  );
-
-  await ch.send({
-    embeds: [embed],
-    files: [{ attachment: file, name: "car.png" }]
-  });
-
-  pending.delete(msg.author.id);
 });
 
-// ===== WELCOME =====
-client.on('guildMemberAdd', member => {
-  const ch = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
-  if (!ch) return;
-
-  const embed = new EmbedBuilder()
-    .setColor(0x00ff00)
-    .setAuthor({ name: "Top Gear Performance", iconURL: LOGO })
-    .setThumbnail(LOGO)
-    .setDescription(
-`🚗 **Willkommen bei 𝒯𝑜𝓅 𝒢𝑒𝒶𝓇 𝒫𝑒𝓇𝒻𝑜𝓇𝓂𝒶𝓃𝒸𝑒**
-
-<@${member.id}> 👋  
-
-🔧 Schön dass du da bist!  
-Hier dreht sich alles um Performance, Style und Geschwindigkeit.  
-
-📍 **Standort:** 1015  
-
-🔥 🏁 Steig ein und erlebe echte Performance!`
-    )
-    .setImage(BANNER);
-
-  ch.send({ embeds: [embed] });
-});
-
+// ===== LOGIN =====
 client.login(TOKEN);
