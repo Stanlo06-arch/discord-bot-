@@ -78,16 +78,18 @@ client.once('clientReady', async () => {
   });
 
   // ===== REGELN (HIER RICHTIG!) =====
+  client.once('clientReady', async () => {
+  console.log("✅ Bot online");
+
+  // ===== REGELN =====
   const regelChannel = await client.channels.fetch(REGEL_CHANNEL_ID);
 
   await regelChannel.send({
     embeds: [
       new EmbedBuilder()
         .setColor(0x00ff00)
-        .setTitle("📜 Server Regeln")
-        .setDescription("Bitte bestätige die Regeln um Zugriff zu erhalten.")
-        .setThumbnail(LOGO)
-        .setImage(BANNER)
+        .setTitle("📜 Regeln")
+        .setDescription("Bitte bestätige die Regeln")
     ],
     components: [
       new ActionRowBuilder().addComponents(
@@ -99,6 +101,7 @@ client.once('clientReady', async () => {
     ]
   });
 
+});
   // ===== TICKET =====
   const ticketPanel = await client.channels.fetch(TICKET_PANEL_ID);
   const msgs2 = await ticketPanel.messages.fetch({ limit: 10 });
