@@ -219,6 +219,44 @@ if (interaction.customId === 'urlaub') {
   );
 }
 
+  // ===== VORLAGE SEITEN =====
+if (interaction.customId === 'next' || interaction.customId === 'back') {
+
+  const data = vorlageData.get(interaction.user.id);
+  let page = vorlagePages.get(interaction.user.id);
+
+  if (!data) return;
+
+  const channels = data.channels;
+
+  if (interaction.customId === 'next') page++;
+  if (interaction.customId === 'back') page--;
+
+  const maxPage = Math.ceil(channels.length / 25) - 1;
+
+  if (page < 0) page = 0;
+  if (page > maxPage) page = maxPage;
+
+  vorlagePages.set(interaction.user.id, page);
+
+  const menu = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId('vorlage_channel')
+      .setPlaceholder(`Seite ${page + 1}`)
+      .addOptions(channels.slice(page * 25, page * 25 + 25))
+  );
+
+  const buttons = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('back').setLabel('⬅️').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('next').setLabel('➡️').setStyle(ButtonStyle.Secondary)
+  );
+
+  return interaction.update({
+    content: `📢 Wähle den Channel (Seite ${page + 1}/${maxPage + 1})`,
+    components: [menu, buttons]
+  });
+}
+
 // ===== MODAL SUBMIT =====  
 if (interaction.isModalSubmit()) {  
 
