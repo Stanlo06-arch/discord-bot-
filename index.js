@@ -62,7 +62,6 @@ new EmbedBuilder()
 .setImage(BANNER)
 ],
 components: [
-components: [
   new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('vorlage').setLabel('📢 Vorlage').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId('xenon').setLabel('🚗 Xenon').setStyle(ButtonStyle.Success),
