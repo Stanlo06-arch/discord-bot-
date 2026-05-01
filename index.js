@@ -77,6 +77,28 @@ client.once('clientReady', async () => {
     ]
   });
 
+  // ===== REGELN (HIER RICHTIG!) =====
+  const regelChannel = await client.channels.fetch(REGEL_CHANNEL_ID);
+
+  await regelChannel.send({
+    embeds: [
+      new EmbedBuilder()
+        .setColor(0x00ff00)
+        .setTitle("📜 Server Regeln")
+        .setDescription("Bitte bestätige die Regeln um Zugriff zu erhalten.")
+        .setThumbnail(LOGO)
+        .setImage(BANNER)
+    ],
+    components: [
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('verify')
+          .setLabel('✅ Regeln akzeptieren')
+          .setStyle(ButtonStyle.Success)
+      )
+    ]
+  });
+
   // ===== TICKET =====
   const ticketPanel = await client.channels.fetch(TICKET_PANEL_ID);
   const msgs2 = await ticketPanel.messages.fetch({ limit: 10 });
@@ -98,6 +120,7 @@ client.once('clientReady', async () => {
     ]
   });
 
+});
   // ===== REGELN =====
   const regelChannel = await client.channels.fetch(REGEL_CHANNEL_ID);
 
