@@ -30,6 +30,9 @@ if (!data || !pages) return [];
 const roleStart = pages.rolePage * 25;
 const userStart = pages.userPage * 25;
 
+  roles.sort((a, b) => a.label.localeCompare(b.label));
+users.sort((a, b) => a.label.localeCompare(b.label));
+
 // 👉 SLICE RICHTIG
 const roleSlice = data.roles.slice(roleStart, roleStart + 25);
 const userSlice = data.users.slice(userStart, userStart + 25);
@@ -39,7 +42,7 @@ const roleMenu = new ActionRowBuilder().addComponents(
     .setCustomId('select_roles')
     .setPlaceholder(`🎭 Rollen Seite ${pages.rolePage + 1}`)
     .setMinValues(0)
-    .setMaxValues(roleSlice.length || 1)
+    .setMaxValues(Math.min(25, userSlice.length || 1))
     .addOptions(
       roleSlice.length
         ? roleSlice
@@ -52,7 +55,7 @@ const userMenu = new ActionRowBuilder().addComponents(
     .setCustomId('select_users')
     .setPlaceholder(`👤 User Seite ${pages.userPage + 1}`)
     .setMinValues(0)
-    .setMaxValues(userSlice.length || 1)
+    .setMaxValues(Math.min(25, userSlice.length || 1))
     .addOptions(
       userSlice.length
         ? userSlice
@@ -149,7 +152,9 @@ if (x.startsWith("user_")) return `<@${x.replace("user_", "")}>`;
 const embed = new EmbedBuilder()
 .setColor(0x00ff00)
 .setTitle(data.title)
-.setDescription(`${mentions}\n\n${data.text}`);
+.setDescription(
+`${mentions ? `👥 **Erwähnung:**\n${mentions}\n\n` : ''}${data.text}`
+)
 
 return interaction.update({
 content: "📢 Vorschau:",
@@ -216,21 +221,32 @@ new TextInputBuilder()
 
 }
 
-  if (interaction.isStringSelectMenu()) {
+ if (interaction.isStringSelectMenu()) {
 
 const data = newsData.get(interaction.user.id);
 if (!data) return;
 
-// 👉 HIER ist der BONUS FIX
-const filtered = interaction.values.filter(v => !v.startsWith("none_"));
+// 👉 entferne alte Auswahl vom gleichen Typ
+if (interaction.customId === 'select_roles') {
+  data.selected = (data.selected || []).filter(x => !x.startsWith("role_"));
+}
 
-data.selected = [...new Set([...(data.selected || []), ...filtered])];
+if (interaction.customId === 'select_users') {
+  data.selected = (data.selected || []).filter(x => !x.startsWith("user_"));
+}
+
+// 👉 neue hinzufügen
+const filtered = interaction.values.filter(v => !v.startsWith("none_"));
+data.selected.push(...filtered);
+
+// 👉 unique
+data.selected = [...new Set(data.selected)];
 
 newsData.set(interaction.user.id, data);
 
 return interaction.reply({
-content: `✅ ${data.selected.length} ausgewählt`,
-flags: 64
+  content: `✅ Ausgewählt: ${data.selected.length}`,
+  flags: 64
 });
 }
 
