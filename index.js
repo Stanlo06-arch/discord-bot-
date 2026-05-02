@@ -557,6 +557,11 @@ if (interaction.isStringSelectMenu()) {
   }
 }
 
+  } catch (err) {
+  console.error(err);
+}
+});
+
 // ===== IMAGE HANDLER =====
 client.on('messageCreate', async msg => {
 if (!msg.attachments.size) return;
