@@ -181,6 +181,45 @@ try {
 
 if (interaction.isButton()) {  
 
+  if (interaction.customId === 'send_news') {
+
+  const data = vorlageData.get(interaction.user.id);
+  if (!data) return;
+
+  const ch = await client.channels.fetch(data.channelId);
+
+  const embed = new EmbedBuilder()
+    .setColor(0x00ff00)
+    .setTitle(data.title)
+    .setDescription(`${data.mentionText ? `👥 **Erwähnung**\n${data.mentionText}\n\n` : ''}${data.text}`)
+    .setThumbnail(LOGO)
+    .setImage(BANNER);
+
+  await ch.send({
+    content: data.mentionText || null,
+    embeds: [embed],
+    allowedMentions: { parse: ['users', 'roles'] }
+  });
+
+  vorlageData.delete(interaction.user.id);
+
+  return interaction.update({
+    content: "✅ News gesendet!",
+    embeds: [],
+    components: []
+  });
+}
+
+if (interaction.customId === 'cancel_news') {
+  vorlageData.delete(interaction.user.id);
+
+  return interaction.update({
+    content: "❌ Abgebrochen",
+    embeds: [],
+    components: []
+  });
+}
+
   if (interaction.customId === 'ticket') {  
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });  
 
@@ -463,8 +502,65 @@ ${interaction.fields.getTextInputValue('grund')}`
 // ===== SELECT =====  
 if (interaction.isStringSelectMenu()) {  
 
-  if (interaction.customId === 'vorlage_channel') {  
+  if (interaction.customId === 'vorlage_channel') {
 
+  const data = vorlageData.get(interaction.user.id);
+  if (!data) return;
+
+  let mentions = [];
+
+  if (data.role) {
+    const input = data.role.toLowerCase();
+
+    // USER + NICKNAME (BESSER!)
+    interaction.guild.members.cache.forEach(member => {
+
+      const username = member.user.username.toLowerCase();
+      const nickname = member.displayName.toLowerCase();
+
+      if (username.includes(input) || nickname.includes(input)) {
+        mentions.push(`<@${member.id}>`);
+      }
+
+    });
+
+    // ROLLEN
+    interaction.guild.roles.cache.forEach(role => {
+      if (role.name.toLowerCase().includes(input)) {
+        mentions.push(`<@&${role.id}>`);
+      }
+    });
+  }
+
+  mentions = [...new Set(mentions)];
+  const mentionText = mentions.join(" ");
+
+  const embed = new EmbedBuilder()
+    .setColor(0x00ff00)
+    .setTitle(data.title)
+    .setDescription(`${mentionText ? `👥 **Erwähnung**\n${mentionText}\n\n` : ''}${data.text}`)
+    .setThumbnail(LOGO)
+    .setImage(BANNER);
+
+  // ===== NEU: PREVIEW =====
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('send_news').setLabel('✅ Senden').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId('cancel_news').setLabel('❌ Abbrechen').setStyle(ButtonStyle.Danger)
+  );
+
+  // SPEICHERN für später
+  vorlageData.set(interaction.user.id, {
+    ...data,
+    mentionText,
+    channelId: interaction.values[0]
+  });
+
+  return interaction.update({
+    content: "📢 Vorschau:",
+    embeds: [embed],
+    components: [row]
+  });
+  }
     const data = vorlageData.get(interaction.user.id);  
     if (!data) return;  
 
