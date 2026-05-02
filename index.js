@@ -30,9 +30,6 @@ if (!data || !pages) return [];
 const roleStart = pages.rolePage * 25;
 const userStart = pages.userPage * 25;
 
-  roles.sort((a, b) => a.label.localeCompare(b.label));
-users.sort((a, b) => a.label.localeCompare(b.label));
-
 // 👉 SLICE RICHTIG
 const roleSlice = data.roles.slice(roleStart, roleStart + 25);
 const userSlice = data.users.slice(userStart, userStart + 25);
