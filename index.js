@@ -132,8 +132,8 @@ if (!data) return;
 const mentions = (data.selected || []).map(x => {
 if (x.startsWith("role_")) return `<@&${x.replace("role_", "")}>`;
 if (x.startsWith("user_")) return `<@${x.replace("user_", "")}>`;
-}).join(" ");
-
+}).filter(Boolean).join(" ");
+    
 const embed = new EmbedBuilder()
 .setColor(0x00ff00)
 .setTitle(data.title)
@@ -261,5 +261,10 @@ if (interaction.isModalSubmit()) {
     });
   }
 }
+
+} catch (err) {
+  console.error(err);
+}
+});
 
 client.login(TOKEN);
