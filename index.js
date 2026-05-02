@@ -549,64 +549,6 @@ if (interaction.isStringSelectMenu()) {
     channelId: interaction.values[0]
   });
 
-  return interaction.update({
-    content: "📢 Vorschau:",
-    embeds: [embed],
-    components: [row]
-  });
-  }
-    const data = vorlageData.get(interaction.user.id);  
-if (!data) return;  
-
-let mentions = [];
-
-if (data.role) {
-  const input = data.role.toLowerCase();
-
-  interaction.guild.members.cache.forEach(member => {
-    const username = member.user.username.toLowerCase();
-    const nickname = member.displayName.toLowerCase();
-
-    if (input.includes(username) || input.includes(nickname)) {
-      mentions.push(`<@${member.id}>`);
-    }
-  });
-
-  interaction.guild.roles.cache.forEach(role => {
-    const roleName = role.name.toLowerCase();
-
-    if (input.includes(roleName)) {
-      mentions.push(`<@&${role.id}>`);
-    }
-  });
-}
-
-mentions = [...new Set(mentions)];
-
-const mentionText = mentions.join(" ");
-
-const ch = await client.channels.fetch(interaction.values[0]);  
-
-const embed = new EmbedBuilder()  
-  .setColor(0x00ff00)  
-  .setTitle(data.title)  
-  .setDescription(`${mentionText ? `👥 **Erwähnung**\n${mentionText}\n\n` : ''}${data.text}`)  
-  .setThumbnail(LOGO)  
-  .setImage(BANNER);  
-
-await ch.send({  
-  content: mentionText || null,  
-  embeds: [embed],  
-  allowedMentions: { parse: ['users', 'roles'] }  
-});  
-
-vorlageData.delete(interaction.user.id);  
-
-return interaction.update({
-  content: "✅ Vorlage gesendet!",
-  components: []
-});
-
 // ===== IMAGE HANDLER =====
 client.on('messageCreate', async msg => {
 if (!msg.attachments.size) return;
