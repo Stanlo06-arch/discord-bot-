@@ -13,25 +13,32 @@ intents: [GatewayIntentBits.Guilds]
 
 const TOKEN = process.env.TOKEN;
 
-// 👉 HIER DEIN CHANNEL
+// ===== IDs =====
 const PANEL_CHANNEL_ID = "1498441200062169159";
+
+// ===== DESIGN =====
+const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png";
+const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png";
 
 client.once('ready', async () => {
 console.log("✅ Bot online");
 
-// Channel holen
 const channel = await client.channels.fetch(PANEL_CHANNEL_ID);
 
 // alte Nachrichten löschen (optional)
 const messages = await channel.messages.fetch({ limit: 10 });
 await channel.bulkDelete(messages, true).catch(() => {});
 
-// Panel senden
+// Embed
 const embed = new EmbedBuilder()
 .setColor(0x00ff00)
-.setTitle("Mitarbeiter Panel")
-.setDescription("Wähle eine Aktion");
+.setAuthor({ name: "Top Gear Performance", iconURL: LOGO })
+.setThumbnail(LOGO)
+.setTitle("🔧 Mitarbeiter Panel")
+.setDescription("Wähle eine Aktion")
+.setImage(BANNER);
 
+// Buttons
 const row = new ActionRowBuilder().addComponents(
 new ButtonBuilder().setCustomId('news').setLabel('📢 News').setStyle(ButtonStyle.Primary),
 new ButtonBuilder().setCustomId('xenon').setLabel('🚗 Xenon').setStyle(ButtonStyle.Success),
