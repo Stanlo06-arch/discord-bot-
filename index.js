@@ -14,7 +14,7 @@ intents: [GatewayIntentBits.Guilds]
 const TOKEN = process.env.TOKEN;
 
 // 👉 HIER DEIN CHANNEL
-const PANEL_CHANNEL_ID = "DEINE_CHANNEL_ID";
+const PANEL_CHANNEL_ID = "1498441200062169159";
 
 client.once('ready', async () => {
 console.log("✅ Bot online");
