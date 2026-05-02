@@ -27,9 +27,10 @@ const pages = newsPages.get(userId);
 
 if (!data || !pages) return [];
 
-const roleOptions = data.roles.slice(roleStart, roleStart + 25);
-const userOptions = data.users.slice(userStart, userStart + 25);
-
+// 👉 DIESE ZEILEN HABEN DIR GEFEHLT
+const roleStart = pages.rolePage * 25;
+const userStart = pages.userPage * 25;
+  
 const roleMenu = new ActionRowBuilder().addComponents(
   new StringSelectMenuBuilder()
     .setCustomId('select_roles')
