@@ -470,47 +470,53 @@ if (interaction.isStringSelectMenu()) {
 
     let mentions = [];
 
-if (data.role) {
-  const parts = data.role.split(" ");
+    if (data.role) {
 
-  for (const part of parts) {
-    const name = part.replace('@', '').toLowerCase();
+      const input = data.role.toLowerCase();
 
-    // USER finden
-    const member = interaction.guild.members.cache.find(m =>
-      m.user.username.toLowerCase() === name
-    );
+      // ===== USER + NICKNAME =====
+      interaction.guild.members.cache.forEach(member => {
 
-    if (member) {
-      mentions.push(`<@${member.id}>`);
-      continue;
+        const username = member.user.username.toLowerCase();
+        const nickname = member.displayName.toLowerCase();
+
+        if (input.includes(username) || input.includes(nickname)) {
+          mentions.push(`<@${member.id}>`);
+        }
+
+      });
+
+      // ===== ROLLEN =====
+      interaction.guild.roles.cache.forEach(role => {
+
+        const roleName = role.name.toLowerCase();
+
+        if (input.includes(roleName)) {
+          mentions.push(`<@&${role.id}>`);
+        }
+
+      });
+
     }
 
-    // ROLLE finden
-    const role = interaction.guild.roles.cache.find(r =>
-      r.name.toLowerCase() === name
-    );
+    // doppelte entfernen
+    mentions = [...new Set(mentions)];
 
-    if (role) {
-      mentions.push(`<@&${role.id}>`);
-    }
-  }
-}
+    const mentionText = mentions.join(" ");
 
-const mentionText = mentions.join(" ");
     const ch = await client.channels.fetch(interaction.values[0]);  
 
     const embed = new EmbedBuilder()  
       .setColor(0x00ff00)  
       .setTitle(data.title)  
-      .setDescription(`${roleMention ? `👥 **Rolle**\n${roleMention}\n\n` : ''}${data.text}`)  
+      .setDescription(`${mentionText ? `👥 **Erwähnung**\n${mentionText}\n\n` : ''}${data.text}`)  
       .setThumbnail(LOGO)  
       .setImage(BANNER);  
 
     await ch.send({  
-      content: roleMention || null,  
+      content: mentionText || null,  
       embeds: [embed],  
-      allowedMentions: { parse: ['roles'] }  
+      allowedMentions: { parse: ['users', 'roles'] }  
     });  
 
     vorlageData.delete(interaction.user.id);  
@@ -521,12 +527,6 @@ const mentionText = mentions.join(" ");
     });  
   }  
 }
-
-} catch (err) {
-console.error(err);
-}
-});
-
 // ===== IMAGE HANDLER =====
 client.on('messageCreate', async msg => {
 if (!msg.attachments.size) return;
