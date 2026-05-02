@@ -46,7 +46,49 @@ GatewayIntentBits.GuildMembers
 
 const pending = new Map();
 const newsData = new Map();
+const vorlagePages = new Map();
 
+function buildMenus(userId) {
+
+const data = vorlageData.get(userId);
+const pages = vorlagePages.get(userId);
+
+if (!data || !pages) return [];
+
+const roleStart = pages.rolePage * 25;
+const userStart = pages.userPage * 25;
+
+const roleMenu = new ActionRowBuilder().addComponents(
+new StringSelectMenuBuilder()
+.setCustomId('select_roles')
+.setPlaceholder(`🎭 Rollen Seite ${pages.rolePage + 1}`)
+.setMinValues(0)
+.setMaxValues(25)
+.addOptions(data.roles.slice(roleStart, roleStart + 25))
+);
+
+const userMenu = new ActionRowBuilder().addComponents(
+new StringSelectMenuBuilder()
+.setCustomId('select_users')
+.setPlaceholder(`👤 User Seite ${pages.userPage + 1}`)
+.setMinValues(0)
+.setMaxValues(25)
+.addOptions(data.users.slice(userStart, userStart + 25))
+);
+
+const buttons = new ActionRowBuilder().addComponents(
+new ButtonBuilder().setCustomId('role_back').setLabel('⬅️ Rollen').setStyle(ButtonStyle.Secondary),
+new ButtonBuilder().setCustomId('role_next').setLabel('➡️ Rollen').setStyle(ButtonStyle.Secondary),
+new ButtonBuilder().setCustomId('user_back').setLabel('⬅️ User').setStyle(ButtonStyle.Secondary),
+new ButtonBuilder().setCustomId('user_next').setLabel('➡️ User').setStyle(ButtonStyle.Secondary)
+);
+
+const confirm = new ActionRowBuilder().addComponents(
+new ButtonBuilder().setCustomId('preview_news').setLabel('📢 Vorschau').setStyle(ButtonStyle.Success)
+);
+
+return [roleMenu, userMenu, buttons, confirm];
+}
 // ===== READY =====
 client.once('clientReady', async () => {
 console.log("✅ Bot online");
@@ -112,7 +154,39 @@ client.on('interactionCreate', async interaction => {
 try {
 
 // ===== BUTTONS =====
-if (interaction.isButton()) {
+if (interaction.isButton()) {if (
+interaction.customId === 'role_next' ||
+interaction.customId === 'role_back' ||
+interaction.customId === 'user_next' ||
+interaction.customId === 'user_back'
+) {
+
+const pages = vorlagePages.get(interaction.user.id);
+const data = vorlageData.get(interaction.user.id);
+
+if (!pages || !data) return;
+
+if (interaction.customId === 'role_next') pages.rolePage++;
+if (interaction.customId === 'role_back') pages.rolePage--;
+
+if (interaction.customId === 'user_next') pages.userPage++;
+if (interaction.customId === 'user_back') pages.userPage--;
+
+const maxRole = Math.ceil(data.roles.length / 25) - 1;
+const maxUser = Math.ceil(data.users.length / 25) - 1;
+
+if (pages.rolePage < 0) pages.rolePage = 0;
+if (pages.rolePage > maxRole) pages.rolePage = maxRole;
+
+if (pages.userPage < 0) pages.userPage = 0;
+if (pages.userPage > maxUser) pages.userPage = maxUser;
+
+vorlagePages.set(interaction.user.id, pages);
+
+return interaction.update({
+components: buildMenus(interaction.user.id)
+});
+}
 
 // NEWS BUTTON
 if (interaction.customId === 'news') {
@@ -209,6 +283,60 @@ if (interaction.isModalSubmit()) {
 
 // NEWS
 if (interaction.customId === 'news_modal') {
+
+const roles = interaction.guild.roles.cache
+.filter(r => r.name !== "@everyone")
+.map(r => ({ label: r.name, value: `role_${r.id}` }));
+
+const users = interaction.guild.members.cache
+.map(m => ({ label: m.user.username, value: `user_${m.id}` }));
+
+vorlageData.set(interaction.user.id, {
+title: interaction.fields.getTextInputValue('title'),
+text: interaction.fields.getTextInputValue('text'),
+roles,
+users,
+selected: []
+});
+
+vorlagePages.set(interaction.user.id, {
+rolePage: 0,
+userPage: 0
+});
+
+return interaction.reply({
+content: "🎯 Wähle Rollen & User:",
+components: buildMenus(interaction.user.id),
+flags: MessageFlags.Ephemeral
+});
+}
+
+const roles = interaction.guild.roles.cache
+.filter(r => r.name !== "@everyone")
+.map(r => ({ label: r.name, value: `role_${r.id}` }));
+
+const users = interaction.guild.members.cache
+.map(m => ({ label: m.user.username, value: `user_${m.id}` }));
+
+vorlageData.set(interaction.user.id, {
+title: interaction.fields.getTextInputValue('title'),
+text: interaction.fields.getTextInputValue('text'),
+roles,
+users,
+selected: []
+});
+
+vorlagePages.set(interaction.user.id, {
+rolePage: 0,
+userPage: 0
+});
+
+return interaction.reply({
+content: "🎯 Wähle Rollen & User:",
+components: buildMenus(interaction.user.id),
+flags: MessageFlags.Ephemeral
+});
+}
 newsData.set(interaction.user.id, {
 title: interaction.fields.getTextInputValue('title'),
 text: interaction.fields.getTextInputValue('text')
