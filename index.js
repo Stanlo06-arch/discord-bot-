@@ -521,14 +521,19 @@ if (interaction.isStringSelectMenu()) {
 
     vorlageData.delete(interaction.user.id);  
 
-    return interaction.update({  
-      content: "✅ Vorlage gesendet!",  
-      components: []  
-    });  
-  }  
+    return interaction.update({
+  content: "✅ Vorlage gesendet!",
+  components: []
+});
 }
 }
-  // ===== IMAGE HANDLER =====
+
+} catch (err) {
+  console.error(err);
+}
+});
+
+// ===== IMAGE HANDLER =====
 client.on('messageCreate', async msg => {
 if (!msg.attachments.size) return;
 
