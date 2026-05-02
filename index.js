@@ -278,12 +278,6 @@ if (interaction.customId === 'cancel_news') {
   });
 }
 
-  return interaction.update({
-    content: "📢 Vorschau:",
-    embeds: [embed],
-    components: [row]
-  });
-
   if (interaction.customId === 'ticket') {  
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });  
 
@@ -341,13 +335,24 @@ if (interaction.customId === 'cancel_news') {
   });
 }
 
-  // Vorlage Modal  
+   // Vorlage Modal  
+   if (interaction.isModalSubmit()) {
 
-  const users = interaction.guild.members.cache
-    .map(m => ({
-      label: m.user.username,
-      value: `user_${m.id}`
-    }));
+  if (interaction.customId === 'news_modal') {
+
+    const roles = interaction.guild.roles.cache
+      .filter(r => r.name !== "@everyone")
+      .map(r => ({
+        label: r.name,
+        value: `role_${r.id}`
+      }));
+
+    // ✅ HIER gehört es hin
+    const users = interaction.guild.members.cache
+      .map(m => ({
+        label: m.user.username,
+        value: `user_${m.id}`
+      }));
 
   vorlageData.set(interaction.user.id, {
     title: interaction.fields.getTextInputValue('title'),
@@ -393,7 +398,7 @@ if (interaction.customId === 'cancel_news') {
     components: [roleMenu, userMenu, buttons, confirm],
     flags: MessageFlags.Ephemeral
   });
-  }
+
 
   // Xenon  
   if (interaction.customId === 'xenon') {  
@@ -503,6 +508,8 @@ if (interaction.customId === 'next' || interaction.customId === 'back') {
 // ===== MODAL SUBMIT =====  
 if (interaction.isModalSubmit()) {
 
+  const users = interaction.guild.members.cache
+
   if (interaction.customId === 'news_modal') {
 
     const roles = interaction.guild.roles.cache
@@ -553,49 +560,27 @@ if (interaction.isModalSubmit()) {
       flags: MessageFlags.Ephemeral
     });
   }
-}
-  
-  if (interaction.customId === 'news') {  
 
-    const channels = interaction.guild.channels.cache  
-      .filter(c => c.type === ChannelType.GuildText)  
-      .map(c => ({ label: c.name, value: c.id }));  
+  // Xenon / Stance Modal
+  if (interaction.customId === 'xenon' || interaction.customId === 'stance') {
+    pending.set(interaction.user.id, {
+      type: interaction.customId,
+      data: interaction.fields
+    });
 
-    vorlageData.set(interaction.user.id, {  
-      title: interaction.fields.getTextInputValue('title'),  
-      text: interaction.fields.getTextInputValue('text'),  
-      role: interaction.fields.getTextInputValue('role'),  
-      channels  
-    });  
+    return interaction.reply({
+      content: "📸 Bitte sende dein Bild",
+      flags: MessageFlags.Ephemeral
+    });
+  }
 
-    vorlagePages.set(interaction.user.id, 0);  
-
-    const menu = new ActionRowBuilder().addComponents(  
-      new StringSelectMenuBuilder()  
-        .setCustomId('vorlage_channel')  
-        .setPlaceholder('Seite 1')  
-        .addOptions(channels.slice(0, 25))  
-    );  
-
-    const buttons = new ActionRowBuilder().addComponents(  
-      new ButtonBuilder().setCustomId('back').setLabel('⬅️').setStyle(ButtonStyle.Secondary),  
-      new ButtonBuilder().setCustomId('next').setLabel('➡️').setStyle(ButtonStyle.Secondary)  
-    );  
-
-    return interaction.reply({  
-      content: "📢 Wähle den Channel:",  
-      components: [menu, buttons],  
-      flags: MessageFlags.Ephemeral  
-    });  
-  }  
-
-  if (interaction.customId === 'familie') {  
-    const embed = new EmbedBuilder()  
-      .setColor(0x00ff00)  
-      .setTitle("🎨 Familie Auftrag")  
-      .setThumbnail(LOGO)  
+  // Familie Modal
+  if (interaction.customId === 'familie') {
+    const embed = new EmbedBuilder()
+      .setColor(0x00ff00)
+      .setTitle("🎨 Familie Auftrag")
+      .setThumbnail(LOGO)
       .setDescription(`🎨 **Primer**
-
 ${interaction.fields.getTextInputValue('primer')}
 
 🎨 Sekundär
@@ -609,50 +594,41 @@ ${interaction.fields.getTextInputValue('unter')}
 
 ➕ Extra
 ${interaction.fields.getTextInputValue('extra')}`)
-.setImage(BANNER);
+      .setImage(BANNER);
 
-const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID);  
-    ch.send({ embeds: [embed] });  
+    const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID);
+    ch.send({ embeds: [embed] });
 
-    return interaction.reply({ content: "✅ Gesendet!", flags: MessageFlags.Ephemeral });  
-  }  
+    return interaction.reply({
+      content: "✅ Gesendet!",
+      flags: MessageFlags.Ephemeral
+    });
+  }
 
-  if (interaction.customId === 'xenon' || interaction.customId === 'stance') {  
-    pending.set(interaction.user.id, {  
-      type: interaction.customId,  
-      data: interaction.fields  
-    });  
+  // Urlaub
+  if (interaction.customId === 'urlaub_modal') {
 
-    return interaction.reply({ content: "📸 Bitte sende dein Bild", flags: MessageFlags.Ephemeral });  
-  }  
-}  
+    const embed = new EmbedBuilder()
+      .setColor(0x00ff00)
+      .setTitle("🛫 Urlaub")
+      .setThumbnail(LOGO)
+      .setDescription(`👤 <@${interaction.user.id}>
 
-  // ===== URLAUB SEND =====
-if (interaction.customId === 'urlaub_modal') {
-
-  const embed = new EmbedBuilder()
-    .setColor(0x00ff00)
-    .setTitle("🛫 Urlaub")
-    .setThumbnail(LOGO)
-    .setDescription(
-`👤 <@${interaction.user.id}>
-
-📅 **Zeitraum**
+📅 Zeitraum
 ${interaction.fields.getTextInputValue('datum')}
 
-📄 **Grund**
-${interaction.fields.getTextInputValue('grund')}`
-    )
-    .setImage(BANNER);
+📄 Grund
+${interaction.fields.getTextInputValue('grund')}`)
+      .setImage(BANNER);
 
-  const ch = await client.channels.fetch(URLAUB_CHANNEL_ID);
+    const ch = await client.channels.fetch(URLAUB_CHANNEL_ID);
+    await ch.send({ embeds: [embed] });
 
-  await ch.send({ embeds: [embed] });
-
-  return interaction.reply({
-    content: "✅ Urlaub gesendet!",
-    flags: MessageFlags.Ephemeral
-  });
+    return interaction.reply({
+      content: "✅ Urlaub gesendet!",
+      flags: MessageFlags.Ephemeral
+    });
+  }
 }
   
 // ===== SELECT =====  
