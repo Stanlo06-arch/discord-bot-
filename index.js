@@ -27,32 +27,34 @@ const pages = newsPages.get(userId);
 
 if (!data || !pages) return [];
 
-const roleStart = pages.rolePage * 25;
-const userStart = pages.userPage * 25;
+const roleOptions = data.roles.slice(roleStart, roleStart + 25);
+const userOptions = data.users.slice(userStart, userStart + 25);
 
 const roleMenu = new ActionRowBuilder().addComponents(
-new StringSelectMenuBuilder()
-.setCustomId('select_roles')
-.setPlaceholder(`🎭 Rollen Seite ${pages.rolePage + 1}`)
-.setMinValues(0)
-.setMaxValues(25)
-.addOptions(
-  data.roles.length
-    ? data.roles.slice(roleStart, roleStart + 25)
-    : [{ label: "Keine Rollen", value: "none_role" }]
-)
+  new StringSelectMenuBuilder()
+    .setCustomId('select_roles')
+    .setPlaceholder(`🎭 Rollen Seite ${pages.rolePage + 1}`)
+    .setMinValues(0)
+    .setMaxValues(25)
+    .addOptions(
+      roleOptions.length
+        ? roleOptions
+        : [{ label: "Keine Rollen", value: "none_role" }]
+    )
+);
 
 const userMenu = new ActionRowBuilder().addComponents(
-new StringSelectMenuBuilder()
-.setCustomId('select_users')
-.setPlaceholder(`👤 User Seite ${pages.userPage + 1}`)
-.setMinValues(0)
-.setMaxValues(25)
-.addOptions(
-  data.users.length
-    ? data.users.slice(userStart, userStart + 25)
-    : [{ label: "Keine User", value: "none_user" }]
-)
+  new StringSelectMenuBuilder()
+    .setCustomId('select_users')
+    .setPlaceholder(`👤 User Seite ${pages.userPage + 1}`)
+    .setMinValues(0)
+    .setMaxValues(25)
+    .addOptions(
+      userOptions.length
+        ? userOptions
+        : [{ label: "Keine User", value: "none_user" }]
+    )
+);
 
 const buttons = new ActionRowBuilder().addComponents(
 new ButtonBuilder().setCustomId('role_back').setLabel('⬅️ Rollen').setStyle(ButtonStyle.Secondary),
