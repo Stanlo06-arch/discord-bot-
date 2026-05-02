@@ -44,9 +44,9 @@ GatewayIntentBits.GuildMembers
 ]
 });
 
-const pending = new Map();
-const newsData = new Map();
+const vorlageData = new Map();
 const vorlagePages = new Map();
+const pending = new Map();
 
 function buildMenus(userId) {
 
@@ -281,7 +281,7 @@ new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('grund')
 // ===== MODALS =====
 if (interaction.isModalSubmit()) {
 
-// NEWS
+// ===== NEWS =====
 if (interaction.customId === 'news_modal') {
 
 const roles = interaction.guild.roles.cache
@@ -311,66 +311,59 @@ flags: MessageFlags.Ephemeral
 });
 }
 
-const roles = interaction.guild.roles.cache
-.filter(r => r.name !== "@everyone")
-.map(r => ({ label: r.name, value: `role_${r.id}` }));
-
-const users = interaction.guild.members.cache
-.map(m => ({ label: m.user.username, value: `user_${m.id}` }));
-
-vorlageData.set(interaction.user.id, {
-title: interaction.fields.getTextInputValue('title'),
-text: interaction.fields.getTextInputValue('text'),
-roles,
-users,
-selected: []
-});
-
-vorlagePages.set(interaction.user.id, {
-rolePage: 0,
-userPage: 0
-});
-
-return interaction.reply({
-content: "🎯 Wähle Rollen & User:",
-components: buildMenus(interaction.user.id),
-flags: MessageFlags.Ephemeral
-});
-}
-newsData.set(interaction.user.id, {
-title: interaction.fields.getTextInputValue('title'),
-text: interaction.fields.getTextInputValue('text')
-});
-
-return interaction.reply({
-content: "📢 News gespeichert (hier später erweitern)",
-flags: MessageFlags.Ephemeral
-});
-}
-
-// XENON / STANCE
+// ===== XENON / STANCE =====
 if (interaction.customId === 'xenon' || interaction.customId === 'stance') {
 pending.set(interaction.user.id, {
 type: interaction.customId,
 data: interaction.fields
 });
-return interaction.reply({ content: "📸 Bild senden!", flags: MessageFlags.Ephemeral });
+
+return interaction.reply({
+content: "📸 Bild senden!",
+flags: MessageFlags.Ephemeral
+});
 }
 
-// URLAUB
+// ===== URLAUB =====
 if (interaction.customId === 'urlaub') {
+
 const embed = new EmbedBuilder()
 .setTitle("Urlaub")
-.setDescription(`${interaction.fields.getTextInputValue('datum')}\n${interaction.fields.getTextInputValue('grund')}`);
+.setDescription(
+`${interaction.fields.getTextInputValue('datum')}
+
+${interaction.fields.getTextInputValue('grund')}`
+);
 
 const ch = await client.channels.fetch(URLAUB_CHANNEL_ID);
-ch.send({ embeds: [embed] });
+await ch.send({ embeds: [embed] });
 
-return interaction.reply({ content: "✅ Gesendet", flags: MessageFlags.Ephemeral });
+return interaction.reply({
+content: "✅ Gesendet",
+flags: MessageFlags.Ephemeral
+});
+}
+
+// ===== FAMILIE =====
+if (interaction.customId === 'familie') {
+
+const embed = new EmbedBuilder()
+.setTitle("🎨 Familie Auftrag")
+.setDescription(
+`Primer:
+${interaction.fields.getTextInputValue('primer')}`
+);
+
+const ch = await client.channels.fetch(FAMILIE_CHANNEL_ID);
+await ch.send({ embeds: [embed] });
+
+return interaction.reply({
+content: "✅ Gesendet",
+flags: MessageFlags.Ephemeral
+});
 }
 
 }
-
 } catch (err) {
 console.error(err);
 }
