@@ -181,6 +181,28 @@ try {
 
 if (interaction.isButton()) {  
 
+  if (interaction.customId === 'news') {
+  return interaction.showModal(
+    new ModalBuilder()
+      .setCustomId('news_modal')
+      .setTitle('News erstellen')
+      .addComponents(
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('title')
+            .setLabel('Titel')
+            .setStyle(TextInputStyle.Short)
+        ),
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('text')
+            .setLabel('Text')
+            .setStyle(TextInputStyle.Paragraph)
+        )
+      )
+  );
+  }
+
   if (interaction.customId === 'send_news') {
 
   const data = vorlageData.get(interaction.user.id);
@@ -278,18 +300,66 @@ if (interaction.customId === 'cancel_news') {
 }
 
   // Vorlage Modal  
-  if (interaction.customId === 'news') {  
-    return interaction.showModal(  
-      new ModalBuilder()  
-        .setCustomId('news')  
-        .setTitle('news')  
-        .addComponents(  
-          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('title').setLabel('Titel').setStyle(TextInputStyle.Short)),  
-          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('text').setLabel('Text').setStyle(TextInputStyle.Paragraph)),  
-          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('role').setLabel('Rolle (@Name optional)').setStyle(TextInputStyle.Short).setRequired(false))  
-        )  
-    );  
-  }  
+  if (interaction.customId === 'news') {
+
+  const roles = interaction.guild.roles.cache
+    .filter(r => r.name !== "@everyone")
+    .map(r => ({
+      label: r.name,
+      value: `role_${r.id}`
+    }));
+
+  const users = interaction.guild.members.cache
+    .map(m => ({
+      label: m.user.username,
+      value: `user_${m.id}`
+    }));
+
+  vorlageData.set(interaction.user.id, {
+    title: interaction.fields.getTextInputValue('title'),
+    text: interaction.fields.getTextInputValue('text'),
+    roles,
+    users,
+    selected: []
+  });
+
+  vorlagePages.set(interaction.user.id, { rolePage: 0, userPage: 0 });
+
+  const roleMenu = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId('select_roles')
+      .setPlaceholder('🎭 Rollen auswählen')
+      .setMinValues(0)
+      .setMaxValues(25)
+      .addOptions(roles.slice(0, 25))
+  );
+
+  const userMenu = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId('select_users')
+      .setPlaceholder('👤 User auswählen')
+      .setMinValues(0)
+      .setMaxValues(25)
+      .addOptions(users.slice(0, 25))
+  );
+
+  const buttons = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('role_back').setLabel('⬅️ Rollen').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('role_next').setLabel('➡️ Rollen').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('user_back').setLabel('⬅️ User').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('user_next').setLabel('➡️ User').setStyle(ButtonStyle.Secondary)
+  );
+
+  const confirm = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('preview_news').setLabel('📢 Vorschau').setStyle(ButtonStyle.Success)
+  );
+
+  return interaction.reply({
+    content: "🎯 Wähle Rollen & User:",
+    components: [roleMenu, userMenu, buttons, confirm],
+    flags: MessageFlags.Ephemeral
+  });
+  }
 
   // Xenon  
   if (interaction.customId === 'xenon') {  
@@ -398,7 +468,69 @@ if (interaction.customId === 'next' || interaction.customId === 'back') {
 
 // ===== MODAL SUBMIT =====  
 if (interaction.isModalSubmit()) {  
+if (interaction.isStringSelectMenu()) {  
 
+  if (interaction.customId === 'news_modal') {
+
+  const roles = interaction.guild.roles.cache
+    .filter(r => r.name !== "@everyone")
+    .map(r => ({
+      label: r.name,
+      value: `role_${r.id}`
+    }));
+
+  const users = interaction.guild.members.cache
+    .map(m => ({
+      label: m.user.username,
+      value: `user_${m.id}`
+    }));
+
+  vorlageData.set(interaction.user.id, {
+    title: interaction.fields.getTextInputValue('title'),
+    text: interaction.fields.getTextInputValue('text'),
+    roles,
+    users,
+    selected: []
+  });
+
+  vorlagePages.set(interaction.user.id, { rolePage: 0, userPage: 0 });
+
+  const roleMenu = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId('select_roles')
+      .setPlaceholder('🎭 Rollen auswählen')
+      .setMinValues(0)
+      .setMaxValues(25)
+      .addOptions(roles.slice(0, 25))
+  );
+
+  const userMenu = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId('select_users')
+      .setPlaceholder('👤 User auswählen')
+      .setMinValues(0)
+      .setMaxValues(25)
+      .addOptions(users.slice(0, 25))
+  );
+
+  const buttons = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('role_back').setLabel('⬅️ Rollen').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('role_next').setLabel('➡️ Rollen').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('user_back').setLabel('⬅️ User').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('user_next').setLabel('➡️ User').setStyle(ButtonStyle.Secondary)
+  );
+
+  const confirm = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('preview_news').setLabel('📢 Vorschau').setStyle(ButtonStyle.Success)
+  );
+
+  return interaction.reply({
+    content: "🎯 Wähle Rollen & User:",
+    components: [roleMenu, userMenu, buttons, confirm],
+    flags: MessageFlags.Ephemeral
+  });
+  }
+  
   if (interaction.customId === 'news') {  
 
     const channels = interaction.guild.channels.cache  
@@ -502,6 +634,7 @@ ${interaction.fields.getTextInputValue('grund')}`
 // ===== SELECT =====  
 if (interaction.isStringSelectMenu()) {  
 
+  
   if (interaction.customId === 'vorlage_channel') {
 
     const data = vorlageData.get(interaction.user.id);
