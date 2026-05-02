@@ -690,12 +690,19 @@ if (interaction.isStringSelectMenu()) {
       new ButtonBuilder().setCustomId('cancel_news').setLabel('❌ Abbrechen').setStyle(ButtonStyle.Danger)
     );
 
-    vorlageData.set(interaction.user.id, {
+        vorlageData.set(interaction.user.id, {
       ...data,
       mentionText,
       channelId: interaction.values[0]
     });
 
+    return interaction.update({
+      content: "📢 Vorschau:",
+      embeds: [embed],
+      components: [row]
+    });
+  }
+}
 
   } catch (err) {
   console.error(err);
