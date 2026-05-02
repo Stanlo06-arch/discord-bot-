@@ -562,71 +562,55 @@ if (interaction.isStringSelectMenu()) {
   });
   }
     const data = vorlageData.get(interaction.user.id);  
-    if (!data) return;  
+if (!data) return;  
 
-    let mentions = [];
+let mentions = [];
 
-    if (data.role) {
+if (data.role) {
+  const input = data.role.toLowerCase();
 
-      const input = data.role.toLowerCase();
+  interaction.guild.members.cache.forEach(member => {
+    const username = member.user.username.toLowerCase();
+    const nickname = member.displayName.toLowerCase();
 
-      // ===== USER + NICKNAME =====
-      interaction.guild.members.cache.forEach(member => {
-
-        const username = member.user.username.toLowerCase();
-        const nickname = member.displayName.toLowerCase();
-
-        if (input.includes(username) || input.includes(nickname)) {
-          mentions.push(`<@${member.id}>`);
-        }
-
-      });
-
-      // ===== ROLLEN =====
-      interaction.guild.roles.cache.forEach(role => {
-
-        const roleName = role.name.toLowerCase();
-
-        if (input.includes(roleName)) {
-          mentions.push(`<@&${role.id}>`);
-        }
-
-      });
-
+    if (input.includes(username) || input.includes(nickname)) {
+      mentions.push(`<@${member.id}>`);
     }
+  });
 
-    // doppelte entfernen
-    mentions = [...new Set(mentions)];
+  interaction.guild.roles.cache.forEach(role => {
+    const roleName = role.name.toLowerCase();
 
-    const mentionText = mentions.join(" ");
+    if (input.includes(roleName)) {
+      mentions.push(`<@&${role.id}>`);
+    }
+  });
+}
 
-    const ch = await client.channels.fetch(interaction.values[0]);  
+mentions = [...new Set(mentions)];
 
-    const embed = new EmbedBuilder()  
-      .setColor(0x00ff00)  
-      .setTitle(data.title)  
-      .setDescription(`${mentionText ? `👥 **Erwähnung**\n${mentionText}\n\n` : ''}${data.text}`)  
-      .setThumbnail(LOGO)  
-      .setImage(BANNER);  
+const mentionText = mentions.join(" ");
 
-    await ch.send({  
-      content: mentionText || null,  
-      embeds: [embed],  
-      allowedMentions: { parse: ['users', 'roles'] }  
-    });  
+const ch = await client.channels.fetch(interaction.values[0]);  
 
-    vorlageData.delete(interaction.user.id);  
+const embed = new EmbedBuilder()  
+  .setColor(0x00ff00)  
+  .setTitle(data.title)  
+  .setDescription(`${mentionText ? `👥 **Erwähnung**\n${mentionText}\n\n` : ''}${data.text}`)  
+  .setThumbnail(LOGO)  
+  .setImage(BANNER);  
 
-    return interaction.update({
+await ch.send({  
+  content: mentionText || null,  
+  embeds: [embed],  
+  allowedMentions: { parse: ['users', 'roles'] }  
+});  
+
+vorlageData.delete(interaction.user.id);  
+
+return interaction.update({
   content: "✅ Vorlage gesendet!",
   components: []
-});
-}
-}
-
-} catch (err) {
-  console.error(err);
-}
 });
 
 // ===== IMAGE HANDLER =====
