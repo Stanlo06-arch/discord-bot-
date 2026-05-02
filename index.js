@@ -36,8 +36,11 @@ new StringSelectMenuBuilder()
 .setPlaceholder(`🎭 Rollen Seite ${pages.rolePage + 1}`)
 .setMinValues(0)
 .setMaxValues(25)
-.addOptions(data.roles.slice(roleStart, roleStart + 25))
-);
+.addOptions(
+  data.roles.length
+    ? data.roles.slice(roleStart, roleStart + 25)
+    : [{ label: "Keine Rollen", value: "none_role" }]
+)
 
 const userMenu = new ActionRowBuilder().addComponents(
 new StringSelectMenuBuilder()
@@ -45,8 +48,11 @@ new StringSelectMenuBuilder()
 .setPlaceholder(`👤 User Seite ${pages.userPage + 1}`)
 .setMinValues(0)
 .setMaxValues(25)
-.addOptions(data.users.slice(userStart, userStart + 25))
-);
+.addOptions(
+  data.users.length
+    ? data.users.slice(userStart, userStart + 25)
+    : [{ label: "Keine User", value: "none_user" }]
+)
 
 const buttons = new ActionRowBuilder().addComponents(
 new ButtonBuilder().setCustomId('role_back').setLabel('⬅️ Rollen').setStyle(ButtonStyle.Secondary),
@@ -69,7 +75,7 @@ const PANEL_CHANNEL_ID = "1498441200062169159";
 const LOGO = "https://cdn.discordapp.com/attachments/1475610426766262333/1495199546035146822/Top_Gear.png";
 const BANNER = "https://cdn.discordapp.com/attachments/1475610426766262333/1496968229585944676/ChatGPT_Image_23._Apr._2026_20_49_03.png";
 
-client.once('ready', async () => {
+client.once('clientReady', async () => {
 console.log("✅ Bot online");
 
 const channel = await client.channels.fetch(PANEL_CHANNEL_ID);
@@ -209,13 +215,16 @@ new TextInputBuilder()
 const data = newsData.get(interaction.user.id);
 if (!data) return;
 
-data.selected = [...new Set([...(data.selected || []), ...interaction.values])];
+// 👉 HIER ist der BONUS FIX
+const filtered = interaction.values.filter(v => !v.startsWith("none_"));
+
+data.selected = [...new Set([...(data.selected || []), ...filtered])];
 
 newsData.set(interaction.user.id, data);
 
 return interaction.reply({
 content: `✅ ${data.selected.length} ausgewählt`,
-ephemeral: true
+flags: 64
 });
 }
 
@@ -257,7 +266,7 @@ if (interaction.isModalSubmit()) {
     return interaction.reply({
       content: "🎯 Wähle Rollen & User:",
       components: buildMenus(interaction.user.id),
-      ephemeral: true
+      flags: 64
     });
   }
 }
