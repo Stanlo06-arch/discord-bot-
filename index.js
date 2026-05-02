@@ -49,79 +49,73 @@ const vorlageData = new Map();
 const vorlagePages = new Map();
 
 // ===== READY =====
-// ===== READY =====
 client.once('clientReady', async () => {
-  console.log("✅ Bot online");
+console.log("✅ Bot online");
 
-  // ===== PANEL =====
-  const panel = await client.channels.fetch(PANEL_CHANNEL_ID);
-  const msgs = await panel.messages.fetch({ limit: 10 });
-  await panel.bulkDelete(msgs, true).catch(() => {});
+const panel = await client.channels.fetch(PANEL_CHANNEL_ID);
+const msgs = await panel.messages.fetch({ limit: 10 });
+await panel.bulkDelete(msgs, true).catch(() => {});
 
-  await panel.send({
-    embeds: [
-      new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setAuthor({ name: "Top Gear Performance", iconURL: LOGO })
-        .setThumbnail(LOGO)
-        .setDescription("Wähle eine Aktion")
-        .setImage(BANNER)
-    ],
-    components: [
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('news').setLabel('📢 News').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('xenon').setLabel('🚗 Xenon').setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setCustomId('stance').setLabel('🏁 Stance').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('familie').setLabel('🎨 Familie').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('urlaub').setLabel('🛫 Urlaub').setStyle(ButtonStyle.Success)
-      )
-    ]
-  });
+await panel.send({
+embeds: [
+new EmbedBuilder()
+.setColor(0x00ff00)
+.setAuthor({ name: "Top Gear Performance", iconURL: LOGO })
+.setThumbnail(LOGO)
+.setDescription("Wähle eine Aktion")
+.setImage(BANNER)
+],
+components: [
+  new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('news').setLabel('📢 News').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('xenon').setLabel('🚗 Xenon').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId('stance').setLabel('🏁 Stance').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('familie').setLabel('🎨 Familie').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('urlaub').setLabel('🛫 Urlaub').setStyle(ButtonStyle.Success)
+  )
+]
+});
 
-  // ===== REGELN =====
-  const regelChannel = await client.channels.fetch(REGEL_CHANNEL_ID);
+const ticketPanel = await client.channels.fetch(TICKET_PANEL_ID);
+const msgs2 = await ticketPanel.messages.fetch({ limit: 10 });
+await ticketPanel.bulkDelete(msgs2, true).catch(() => {});
 
-  await regelChannel.send({
-    embeds: [
-      new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setAuthor({ name: "Top Gear Performance", iconURL: LOGO })
-        .setTitle("📋 Hausordnung – Top Gear Performance")
-        .setDescription(`DEIN GANZER REGEL TEXT`)
-        .setThumbnail(LOGO)
-        .setImage(BANNER)
-    ],
-    components: [
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('verify')
-          .setLabel('✅ Regeln akzeptieren')
-          .setStyle(ButtonStyle.Success)
-      )
-    ]
-  });
+await ticketPanel.send({
+embeds: [
+new EmbedBuilder()
+.setColor(0x00ff00)
+.setTitle("Ticket System")
+.setDescription("Wenn du Hilfe brauchst, sind wir für dich da")
+.setThumbnail(LOGO)
+.setImage(BANNER)
+],
+components: [
+new ActionRowBuilder().addComponents(
+new ButtonBuilder().setCustomId('ticket').setLabel('🎟️ Ticket erstellen').setStyle(ButtonStyle.Success)
+)
+]
+});
+});
 
-  // ===== TICKET =====
-  const ticketPanel = await client.channels.fetch(TICKET_PANEL_ID);
-  const msgs2 = await ticketPanel.messages.fetch({ limit: 10 });
-  await ticketPanel.bulkDelete(msgs2, true).catch(() => {});
+const regelChannel = await client.channels.fetch(REGEL_CHANNEL_ID);
 
-  await ticketPanel.send({
-    embeds: [
-      new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle("Ticket System")
-        .setDescription("Wenn du Hilfe brauchst, sind wir für dich da")
-        .setThumbnail(LOGO)
-        .setImage(BANNER)
-    ],
-    components: [
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('ticket').setLabel('🎟️ Ticket erstellen').setStyle(ButtonStyle.Success)
-      )
-    ]
-  });
-
+await regelChannel.send({
+  embeds: [
+    new EmbedBuilder()
+      .setColor(0x00ff00)
+      .setTitle("📜 Server Regeln")
+      .setDescription("Bitte bestätige die Regeln um Zugriff zu erhalten.")
+      .setThumbnail(LOGO)
+      .setImage(BANNER)
+  ],
+  components: [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('verify')
+        .setLabel('✅ Regeln akzeptieren')
+        .setStyle(ButtonStyle.Success)
+    )
+  ]
 });
 
 // ===== INTERACTIONS =====
@@ -471,10 +465,7 @@ const embed = new EmbedBuilder()
 
 if (user.type === 'xenon') {
 embed.setTitle("🚗 Xenon Auftrag")
-.setDescription(`👥 Erstellt von
-<@${msg.author.id}>
-
-👤 Kundenname
+.setDescription(`👤 Kundenname
 ${user.data.getTextInputValue('name')}
 
 🚘 Kennzeichen
@@ -482,17 +473,16 @@ ${user.data.getTextInputValue('kz')}
 
 🎨 Farbe
 ${user.data.getTextInputValue('farbe')}`);
+}
 
 if (user.type === 'stance') {
 embed.setTitle("🏁 Stance Auftrag")
-.setDescription(`👥 **Erstellt von**
-<@${msg.author.id}>
-
-👤 Kundenname
+.setDescription(`👤 Kundenname
 ${user.data.getTextInputValue('name')}
 
 🚘 Kennzeichen
 ${user.data.getTextInputValue('kz')}`);
+}
 
 const ch = await client.channels.fetch(
 user.type === 'xenon' ? XENON_CHANNEL_ID : STANCE_CHANNEL_ID
