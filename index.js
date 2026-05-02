@@ -25,9 +25,15 @@ console.log("✅ Bot online");
 
 const channel = await client.channels.fetch(PANEL_CHANNEL_ID);
 
-// alte Nachrichten löschen (optional)
+// Nachrichten holen
 const messages = await channel.messages.fetch({ limit: 10 });
-await channel.bulkDelete(messages, true).catch(() => {});
+
+// Panel suchen
+const panelMsg = messages.find(msg =>
+msg.author.id === client.user.id &&
+msg.embeds.length &&
+msg.embeds[0].title?.includes("Mitarbeiter Panel")
+);
 
 // Embed
 const embed = new EmbedBuilder()
@@ -47,10 +53,19 @@ new ButtonBuilder().setCustomId('familie').setLabel('🎨 Familie').setStyle(But
 new ButtonBuilder().setCustomId('urlaub').setLabel('🛫 Urlaub').setStyle(ButtonStyle.Success)
 );
 
+// 👉 UPDATE ODER SEND
+if (panelMsg) {
+await panelMsg.edit({
+embeds: [embed],
+components: [row]
+});
+console.log("♻️ Panel aktualisiert");
+} else {
 await channel.send({
 embeds: [embed],
 components: [row]
 });
+console.log("🆕 Panel erstellt");
+}
 });
-
 client.login(TOKEN);
