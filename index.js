@@ -512,19 +512,15 @@ if (interaction.isStringSelectMenu()) {
   if (data.role) {
     const input = data.role.toLowerCase();
 
-    // USER + NICKNAME (BESSER!)
     interaction.guild.members.cache.forEach(member => {
-
       const username = member.user.username.toLowerCase();
       const nickname = member.displayName.toLowerCase();
 
       if (username.includes(input) || nickname.includes(input)) {
         mentions.push(`<@${member.id}>`);
       }
-
     });
 
-    // ROLLEN
     interaction.guild.roles.cache.forEach(role => {
       if (role.name.toLowerCase().includes(input)) {
         mentions.push(`<@&${role.id}>`);
@@ -542,13 +538,11 @@ if (interaction.isStringSelectMenu()) {
     .setThumbnail(LOGO)
     .setImage(BANNER);
 
-  // ===== NEU: PREVIEW =====
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('send_news').setLabel('✅ Senden').setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId('cancel_news').setLabel('❌ Abbrechen').setStyle(ButtonStyle.Danger)
   );
 
-  // SPEICHERN für später
   vorlageData.set(interaction.user.id, {
     ...data,
     mentionText,
