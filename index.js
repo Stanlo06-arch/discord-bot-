@@ -544,10 +544,18 @@ if (interaction.isStringSelectMenu()) {
   );
 
   vorlageData.set(interaction.user.id, {
-    ...data,
-    mentionText,
-    channelId: interaction.values[0]
-  });
+  ...data,
+  mentionText,
+  channelId: interaction.values[0]
+});
+
+return interaction.update({
+  content: "📢 Vorschau:",
+  embeds: [embed],
+  components: [row]
+});
+}
+}
 
 // ===== IMAGE HANDLER =====
 client.on('messageCreate', async msg => {
