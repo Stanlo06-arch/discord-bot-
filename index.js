@@ -527,7 +527,8 @@ if (interaction.isStringSelectMenu()) {
     });  
   }  
 }
-// ===== IMAGE HANDLER =====
+}
+  // ===== IMAGE HANDLER =====
 client.on('messageCreate', async msg => {
 if (!msg.attachments.size) return;
 
