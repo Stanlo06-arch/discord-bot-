@@ -27,19 +27,22 @@ const pages = newsPages.get(userId);
 
 if (!data || !pages) return [];
 
-// 👉 DIESE ZEILEN HABEN DIR GEFEHLT
 const roleStart = pages.rolePage * 25;
 const userStart = pages.userPage * 25;
-  
+
+// 👉 SLICE RICHTIG
+const roleSlice = data.roles.slice(roleStart, roleStart + 25);
+const userSlice = data.users.slice(userStart, userStart + 25);
+
 const roleMenu = new ActionRowBuilder().addComponents(
   new StringSelectMenuBuilder()
     .setCustomId('select_roles')
     .setPlaceholder(`🎭 Rollen Seite ${pages.rolePage + 1}`)
     .setMinValues(0)
-    .setMaxValues(25)
+    .setMaxValues(roleSlice.length || 1)
     .addOptions(
-      roleOptions.length
-        ? roleOptions
+      roleSlice.length
+        ? roleSlice
         : [{ label: "Keine Rollen", value: "none_role" }]
     )
 );
@@ -49,23 +52,23 @@ const userMenu = new ActionRowBuilder().addComponents(
     .setCustomId('select_users')
     .setPlaceholder(`👤 User Seite ${pages.userPage + 1}`)
     .setMinValues(0)
-    .setMaxValues(25)
+    .setMaxValues(userSlice.length || 1)
     .addOptions(
-      userOptions.length
-        ? userOptions
+      userSlice.length
+        ? userSlice
         : [{ label: "Keine User", value: "none_user" }]
     )
 );
 
 const buttons = new ActionRowBuilder().addComponents(
-new ButtonBuilder().setCustomId('role_back').setLabel('⬅️ Rollen').setStyle(ButtonStyle.Secondary),
-new ButtonBuilder().setCustomId('role_next').setLabel('➡️ Rollen').setStyle(ButtonStyle.Secondary),
-new ButtonBuilder().setCustomId('user_back').setLabel('⬅️ User').setStyle(ButtonStyle.Secondary),
-new ButtonBuilder().setCustomId('user_next').setLabel('➡️ User').setStyle(ButtonStyle.Secondary)
+  new ButtonBuilder().setCustomId('role_back').setLabel('⬅️ Rollen').setStyle(ButtonStyle.Secondary),
+  new ButtonBuilder().setCustomId('role_next').setLabel('➡️ Rollen').setStyle(ButtonStyle.Secondary),
+  new ButtonBuilder().setCustomId('user_back').setLabel('⬅️ User').setStyle(ButtonStyle.Secondary),
+  new ButtonBuilder().setCustomId('user_next').setLabel('➡️ User').setStyle(ButtonStyle.Secondary)
 );
 
 const confirm = new ActionRowBuilder().addComponents(
-new ButtonBuilder().setCustomId('preview_news').setLabel('📢 Vorschau').setStyle(ButtonStyle.Success)
+  new ButtonBuilder().setCustomId('preview_news').setLabel('📢 Vorschau').setStyle(ButtonStyle.Success)
 );
 
 return [roleMenu, userMenu, buttons, confirm];
