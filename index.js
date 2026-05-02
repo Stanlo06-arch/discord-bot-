@@ -268,6 +268,9 @@ if (interaction.isModalSubmit()) {
         value: `user_${m.id}`
       }));
 
+    roles.sort((a, b) => a.label.localeCompare(b.label));
+users.sort((a, b) => a.label.localeCompare(b.label));
+
     newsData.set(interaction.user.id, {
       title,
       text,
